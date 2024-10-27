@@ -1,0 +1,10 @@
+services:
+  app:
+    build:
+      context: .
+    ports:
+      - 5170:5173
+    develop:
+      watch:
+        - action: rebuild
+          path: .
