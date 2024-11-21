@@ -1,5 +1,7 @@
 export default {
   INDEX: "/",
-  DASHBOARD: "/dashboard",
-  MARKETPLACE: "/",
+  LEADERBOARD: "/leaderboard",
+  MARKETPLACE: "/marketplace",
+  PROFILE: "/profile",
+  HISTORY: "/history",
 };

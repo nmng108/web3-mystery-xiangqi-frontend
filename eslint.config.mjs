@@ -1,11 +1,11 @@
 import eslintJS from '@eslint/js';
 import eslintTS from 'typescript-eslint';
-import eslintConfigGoogle from 'eslint-config-google';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import globals from 'globals';
-import reactHooks from 'eslint-plugin-react-hooks';
-import reactRefresh from 'eslint-plugin-react-refresh';
+import reactHooksPlugin from 'eslint-plugin-react-hooks';
+import reactRefreshPlugin from 'eslint-plugin-react-refresh';
 import importPlugin from 'eslint-plugin-import';
+import jsdocPlugin from 'eslint-plugin-jsdoc';
 
 export default eslintTS.config(
   { ignores: ['dist', '.yarn', '**/.pnp.*'] },
@@ -16,7 +16,6 @@ export default eslintTS.config(
       eslintJS.configs.recommended,
       ...eslintTS.configs.recommended,
       eslintConfigPrettier,
-      // eslintConfigGoogle,
     ],
     languageOptions: {
       ecmaVersion: 'latest',
@@ -28,16 +27,19 @@ export default eslintTS.config(
       parserOptions: {},
     },
     plugins: {
-      'react-hooks': reactHooks,
-      'react-refresh': reactRefresh,
+      'react-hooks': reactHooksPlugin,
+      'react-refresh': reactRefreshPlugin,
+      'jsdoc': jsdocPlugin
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
+      ...reactHooksPlugin.configs.recommended.rules,
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
       ],
       'prefer-const': 'warn',
+      'import/no-unresolved': 'off',
+      '@typescript-eslint/no-unused-vars': 'warn',
     },
   }
 );

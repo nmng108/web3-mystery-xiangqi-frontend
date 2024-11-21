@@ -1,4 +1,4 @@
-import {Dashboard, Home, MarketPlace} from "../pages";
+import { Leaderboard, Home, MarketPlace, NotFoundErrorPage } from '../pages';
 import { ROUTES } from "../constants";
 import { createBrowserRouter } from "react-router-dom";
 
@@ -6,17 +6,27 @@ const MainNavigator = createBrowserRouter([
   {
     path: ROUTES.INDEX,
     Component: Home,
-    errorElement: <div>Error: page is not found</div>
+    errorElement: <NotFoundErrorPage />
   },
   {
-    path: ROUTES.DASHBOARD,
-    Component: Dashboard,
-    errorElement: <div>Error: page is not found</div>
+    path: ROUTES.LEADERBOARD,
+    Component: Leaderboard,
+    errorElement: <NotFoundErrorPage />
   },
   {
     path: ROUTES.MARKETPLACE,
     Component: MarketPlace,
-    errorElement: <div>Error: page is not found</div>
+    errorElement: <NotFoundErrorPage />
+  },
+  {
+    path: ROUTES.PROFILE,
+    Component: Home,
+    errorElement: <NotFoundErrorPage />
+  },
+  {
+    path: ROUTES.HISTORY,
+    Component: Home,
+    errorElement: <NotFoundErrorPage />
   },
 ]);
 

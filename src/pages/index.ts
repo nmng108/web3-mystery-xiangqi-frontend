@@ -1,6 +1,7 @@
-import Login from "./authPages/Login";
-import Home from "./mainPages/Home";
-import Dashboard from "./dashboard/Dashboard.tsx";
-import MarketPlace from "./marketplace/MarketPlace.tsx";
+import Login from './auth/Login';
+import Home from './home/Home';
+import Leaderboard from './leaderboard/Leaderboard.tsx';
+import MarketPlace from './marketplace/MarketPlace.tsx';
+import NotFoundErrorPage from './NotFoundErrorPage.tsx';
 
-export {Login, Home, Dashboard, MarketPlace};
+export { Login, Home, Leaderboard, MarketPlace, NotFoundErrorPage };

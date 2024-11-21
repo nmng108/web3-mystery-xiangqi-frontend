@@ -1,9 +1,9 @@
-import useContextHook from "../../hooks/useContextHook";
-import PageContainer from "../../components/PageContainer.tsx";
-import React from "react";
+import PageContainer from '../../components/PageContainer.tsx';
+import React from 'react';
+import { useAuthContext } from '../../hooks';
 
 const MarketPlace: React.FC = () => {
-  const {setIsAuthenticated} = useContextHook();
+  const { setIsAuthenticated } = useAuthContext();
 
   const handlePressOnLogout = () => {
     setIsAuthenticated(false);

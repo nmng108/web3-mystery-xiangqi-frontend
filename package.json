@@ -1,8 +1,12 @@
 {
   "name": "mystery-chinese-chess",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "author": {
+    "name": "Nam Nguyen",
+    "email": "namng.108@gmail.com"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -12,8 +16,11 @@
   },
   "packageManager": "yarn@4.5.0",
   "dependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
     "@floating-ui/dom": "^1.6.11",
-    "@material-tailwind/react": "^2.1.10",
+    "@mui/icons-material": "^6.1.6",
+    "@mui/material": "^6.1.6",
     "apisauce": "^3.0.1",
     "env-var": "^7.5.0",
     "react": "^18.3.1",
@@ -27,9 +34,9 @@
     "@vitejs/plugin-react-swc": "^3.5.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.9.0",
-    "eslint-config-google": "^0.14.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsdoc": "^50.4.3",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
@@ -42,6 +49,9 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [

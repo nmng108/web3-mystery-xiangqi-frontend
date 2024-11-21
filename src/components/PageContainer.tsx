@@ -1,28 +1,20 @@
-import useContextHook from "../hooks/useContextHook.ts";
-import Header from "./Header.tsx";
-import {ThemeProvider} from "@material-tailwind/react";
-import children = ThemeProvider.propTypes.children;
-import React from "react";
+import React from 'react';
+import Header from './Header.tsx';
+import Footer from './Footer.tsx';
 
-type Props = {children?: React.ReactNode};
+type Props = { children?: React.ReactNode };
 
 const PageContainer: React.FC<Props> = (props) => {
-  const {setIsAuthenticated} = useContextHook();
-
-  const handlePressOnLogout = () => {
-    setIsAuthenticated(false);
-  };
-
   return (
     <>
-      <Header/>
-      <button
-        onClick={handlePressOnLogout}
-        className="mt-4 w-44 border-red-500 border p-2 rounded-md cursor-pointer bg-red-500 text-white font-bold"
-      >
-        Press Logout
-      </button>
-      {children}
+      <Header />
+      <main className="w-full h-screen bg-main-img bg-cover bg-center bg-fixed"> {/*flex items-center justify-center*/}
+        {/*<div className="min-h-screen bg-gray-700 text-gray-900">*/}
+
+        {props.children}
+        {/*</div>*/}
+      </main>
+      <Footer />
     </>
   );
 };
