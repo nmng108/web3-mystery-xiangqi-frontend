@@ -170,7 +170,7 @@ const Header: React.FC = () => {
             onClick={toggleDropdown}
             className="flex h-full items-center space-x-2 text-white border-0 hover:text-gray-300 focus:outline-none"
           >
-            <img src={defaultAvatar} alt="Profile" className="w-8 h-8 rounded-full" />
+            <img src={defaultAvatar} alt="Avatar" className="w-8 h-8 rounded-full" />
             <span className="font-semibold">0x1939fji0koq08...</span>
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
               <path

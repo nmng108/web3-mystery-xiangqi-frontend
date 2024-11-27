@@ -5,20 +5,23 @@ import {
   Paper,
   Table,
   TableBody,
-  TableCell,
+  TableCell, TableCellProps,
   TableContainer,
   TableHead,
   TableRow,
   Typography,
 } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import { useGlobalContext } from '../../hooks';
+import { NormalRoomLevel } from '../../constants';
+
 // import {Peer} from "https://esm.sh/peerjs@1.5.4?bundle-deps"
 
-interface Column {
+interface Column extends TableCellProps {
   id: keyof GameTable;
   label: string;
   minWidth?: number;
-  align?: string;
+  align?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
   format?: (value: number) => string;
 }
 
@@ -29,34 +32,6 @@ const columns: readonly Column[] = [
   { id: 'spectators', label: 'Spectators', minWidth: 30, align: 'center' },
   { id: 'stake', label: 'Stake', minWidth: 170, align: 'center', format: (value: number) => value.toFixed(10) },
 ];
-
-class RoomLevel {
-  private readonly _number: number;
-  private readonly _code: string;
-  private readonly _title: string;
-
-  public readonly static BEGINNER = new RoomLevel(0, 'BEGINNER', 'Beginner room');
-  public readonly static INTERMEDIATE = new RoomLevel(1, 'INTERMEDIATE', 'Intermediate room');
-  public readonly static ADVANCED = new RoomLevel(2, 'ADVANCED', 'Advanced room');
-
-  private constructor(number: number, code: string, title: string) {
-    this._number = number;
-    this._code = code;
-    this._title = title;
-  }
-
-  get number(): number {
-    return this._number;
-  }
-
-  get code(): string {
-    return this._code;
-  }
-
-  get title(): string {
-    return this._title;
-  }
-}
 
 class GameTable {
   private readonly _id: number;
@@ -103,48 +78,51 @@ class GameTable {
 type Props = object;
 
 const NormalModeLobby: React.FC<Props> = () => {
-  const [level, setLevel] = useState<RoomLevel>();
   const [gameTableList, setGameTableList] = useState<Array<GameTable>>([]);
-  const [inTable, setInTable] = useState<boolean>(false);
-  const [tableName, setTableName] = useState();
+  const { normalRoomLevel, setNormalRoomLevel, table, setTable } = useGlobalContext();
+  const [selectedTableId, setSelectedTableId] = useState<number>();
 
   const handleBackButton = () => {
-    if (level) {
-      if (inTable) {
-        setInTable(!inTable);
-      } else {
-        setLevel(null);
-      }
+    if (!normalRoomLevel) {
+      return;
+    }
+
+    if (table != null) {
+      setTable(null); // redundant
+    } else {
+      setNormalRoomLevel(null);
     }
   };
 
-  const handleSelectRoomLevel = useCallback((roomLevel: RoomLevel) => {
-    setLevel(roomLevel);
+  const handleSelectRoomLevel = useCallback((roomLevel: NormalRoomLevel) => {
+    setNormalRoomLevel(roomLevel);
+  }, [setNormalRoomLevel]);
 
-  }, []);
-
+  // TODO: replace the GameTable class with TableEntity
   const handleEnterRoom = useCallback((gameTable: GameTable) => {
-    // Send API to request to enter the selected table
-    // Update DOM
-    setInTable(true);
-    let tableName =
-    setTableName()
-  }, [level, setInTable]);
+    if (gameTable.filledSlots == 2) {
+      alert('The selected table is full. You can be spectator or select another room.');
+      return;
+    }
+
+    // Send API to request to fetch the selected table's detail info and then update DOM
+    setSelectedTableId(gameTable.id);
+  }, []);
 
   useEffect(() => {
     // Call API to fetch table list
-    if (typeof level !== 'undefined' && level !== null) {
+    if (typeof normalRoomLevel !== 'undefined' && normalRoomLevel !== null) {
       setGameTableList([
         new GameTable(1, 'n0', 0, 0, 0, false),
         new GameTable(2, 'n098', 1, 0.2241, 1, false),
         new GameTable(3, 'n234', 2, 1.4513, 19, true),
         new GameTable(4, 'n565', 1, 0.09419, 3, false),
+        new GameTable(5, 'nhtr', 1, 2.10193, 0, false),
         new GameTable(6, 'nhtr', 1, 2.10193, 0, false),
-        new GameTable(6, 'nhtr', 1, 2.10193, 0, false),
-        new GameTable(6, 'nhtr', 1, 2.10193, 0, false),
-        new GameTable(6, 'nhtr', 1, 2.10193, 0, false),
-        new GameTable(6, 'nhtr', 1, 2.10193, 0, false),
-        new GameTable(6, 'nhtr', 1, 2.10193, 0, false),
+        new GameTable(7, 'nhtr', 1, 2.10193, 0, false),
+        new GameTable(8, 'nhtr', 1, 2.10193, 0, false),
+        new GameTable(9, 'nhtr', 1, 2.10193, 0, false),
+        new GameTable(10, 'nhtr', 1, 2.10193, 0, false),
         new GameTable(6, 'nhtr', 1, 2.10193, 0, false),
         new GameTable(6, 'nhtr', 1, 2.10193, 0, false),
         new GameTable(6, 'nhtr', 1, 2.10193, 0, false),
@@ -154,29 +132,51 @@ const NormalModeLobby: React.FC<Props> = () => {
     return () => {
       setGameTableList([]);
     };
-  }, [level, setGameTableList]);
+  }, [normalRoomLevel, setGameTableList]);
+
+  // Send API to request to fetch the selected table's detail info and then update DOM
+  useEffect(() => {
+    if (selectedTableId != null && selectedTableId != 0) {
+      setTable({
+        id: selectedTableId,
+        // gameMode: GameMode,
+        name: '',
+        players: [
+          { address: '0x11111', name: 'namng108', elo: 270 },
+          { address: '0x9999999', name: 'Henry', elo: 220 },
+        ], // should be accessed using the constants 'BLACK', 'RED'
+        hostIndex: 0,
+        stake: 0,
+        timeControl: 20 * 3600,
+        matchId: undefined,
+      });
+
+      setSelectedTableId(null);
+    }
+  }, [selectedTableId, setTable]);
+
   return (
-    <div className="flex border-2 border-solid border-black rounded-2xl flex-col text-blue-950">
-      {level ? (
+    <div className="flex min-h-40 h-4/5 2xl:h-3/4 border-2 border-solid border-black rounded-lg flex-col text-blue-950">
+      {normalRoomLevel ? (
         <>
           <div className="relative w-full h-12 justify-self-start">
             <IconButton className="block absolute left-0 top-0 w-1/10 my-auto" onClick={handleBackButton}>
               <ArrowBackRoundedIcon />
             </IconButton>
-            <Typography variant="h5" className="my-auto">{level.title}</Typography>
+            <Typography variant="h5" className="my-auto">{normalRoomLevel.name}</Typography>
           </div>
           <Paper className="w-full overflow-hidden">
             <TableContainer className="h-full">
               <Table stickyHeader aria-label="sticky table">
                 <TableHead>
                   <TableRow>
-                    {columns.map((column) => (
+                    {columns.map((column, i) => (
                       <TableCell
-                        key={column.id}
+                        key={i}
                         align={column.align}
                         style={{ minWidth: column.minWidth }}
                       >
-                        {column.id === 'id' ? '' : column.label}wfwekjgnekjgnewgfnewjkfnewdjdjdjdkdkverfherrereetherdsalslsdlsolswew
+                        {column.id === 'id' ? '' : column.label}
                       </TableCell>
                     ))}
                   </TableRow>
@@ -224,24 +224,24 @@ const NormalModeLobby: React.FC<Props> = () => {
       ) : (
         <div className="flex grow row-start-2 flex-col justify-center space-y-4">
           <Button
-            variant="outlined"
-            color="info"
-            className="p-4 rounded-lg shadow-md text-center bg-neutral-800"
-            onClick={() => handleSelectRoomLevel(RoomLevel.BEGINNER)}>
+            variant="contained"
+            color="success"
+            className="p-4 rounded-lg shadow-md text-center"
+            onClick={() => handleSelectRoomLevel(NormalRoomLevel.BEGINNER)}>
             <p className="font-semibold text-lg">Beginner room</p>
           </Button>
           <Button
-            variant="outlined"
-            color="info"
-            className="p-4 rounded-lg shadow-md text-center bg-neutral-800"
-            onClick={() => handleSelectRoomLevel(RoomLevel.INTERMEDIATE)}>
+            variant="contained"
+            color="success"
+            className="p-4 rounded-lg shadow-md text-center"
+            onClick={() => handleSelectRoomLevel(NormalRoomLevel.INTERMEDIATE)}>
             <p className="font-semibold text-lg">Intermediate room</p>
           </Button>
           <Button
-            variant="outlined"
-            color="info"
-            className="p-4 rounded-lg shadow-md text-center bg-neutral-800"
-            onClick={() => handleSelectRoomLevel(RoomLevel.ADVANCED)}>
+            variant="contained"
+            color="success"
+            className="p-4 rounded-lg shadow-md text-center"
+            onClick={() => handleSelectRoomLevel(NormalRoomLevel.ADVANCED)}>
             <p className="font-semibold text-lg">Advanced room</p>
           </Button>
         </div>

@@ -13,12 +13,12 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import React from 'react';
 
-type Props = { isOpen: boolean, handleClose };
+type Props = { isOpen: boolean, handleClose: () => void };
 
 const MetamaskIcon: React.FC = () => (
   <img
     src="https://docs.material-tailwind.com/icons/metamask.svg"
-    alt="metamast"
+    alt="metamask"
     className="h-6 w-6"
   />
 );
@@ -26,7 +26,7 @@ const MetamaskIcon: React.FC = () => (
 const CoinbaseIcon: React.FC = () => (
   <img
     src="https://docs.material-tailwind.com/icons/coinbase.svg"
-    alt="metamast"
+    alt="coinbase"
     className="h-6 w-6 rounded-md"
   />
 );
@@ -34,7 +34,7 @@ const CoinbaseIcon: React.FC = () => (
 const TrustWalletIcon: React.FC = () => (
   <img
     src="https://docs.material-tailwind.com/icons/trust-wallet.svg"
-    alt="metamast"
+    alt="trustwallet"
     className="h-7 w-7 rounded-md border border-blue-gray-50"
   />
 );

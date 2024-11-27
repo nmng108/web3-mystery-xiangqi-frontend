@@ -4,7 +4,7 @@ import ConnectWalletModal from './ConnectWalletModal.tsx';
 import { Button, Typography } from '@mui/material';
 
 const Login: React.FC = () => {
-  const { setIsAuthenticated } = useAuthContext();
+  const { setIsAuthenticated, setUser } = useAuthContext();
   const [isWalletModalOpen, setIsWalletModalOpen] = React.useState(false);
 
   const handleCloseWalletModal = useCallback(() => {
@@ -13,7 +13,8 @@ const Login: React.FC = () => {
 
   const handlePressOnLogin = useCallback(() => {
     setIsAuthenticated(true);
-  }, [setIsAuthenticated]);
+    setUser({address: '0x11111', name: 'namng108', elo: 123})
+  }, [setIsAuthenticated, setUser]);
 
   return (
     <div className="w-full h-screen bg-main-img bg-cover bg-center bg-fixed flex items-center justify-center">
@@ -23,7 +24,7 @@ const Login: React.FC = () => {
           <h1 className="text-3xl md:text-4xl font-bold mb-6">Welcome to Mystery Xiangqi</h1>
           <p className="mb-8 text-lg md:text-xl">Connect your wallet to continue</p>
           <Button
-            varian="outlined"
+            variant="outlined"
             onClick={handlePressOnLogin}
             className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200"
           >

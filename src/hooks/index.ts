@@ -1,3 +1,4 @@
-import useAuthContext from './useAppContext.ts';
+import useAuthContext from './useAuthContext.ts';
+import useGlobalContext from './useGlobalContext.ts';
 
-export { useAuthContext };
+export { useAuthContext, useGlobalContext };

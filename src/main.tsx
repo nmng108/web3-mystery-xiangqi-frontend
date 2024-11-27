@@ -3,10 +3,10 @@ import { createRoot, Root } from 'react-dom/client';
 import { createTheme, CssBaseline, StyledEngineProvider, ThemeProvider } from '@mui/material';
 import App from './App.tsx';
 import './index.css';
-import { AuthContextProvider } from './context';
+import { AuthContextProvider, GlobalContextProvider } from './context';
 
-const rootElement: HTMLElement = document.getElementById("root");
-const root: Root = createRoot(rootElement!);
+const rootElement: HTMLElement = document.getElementById('root')!;
+const root: Root = createRoot(rootElement);
 
 const theme = createTheme({
   components: {
@@ -38,8 +38,10 @@ root.render(
     <StyledEngineProvider injectFirst>
       <ThemeProvider theme={theme}>
         <AuthContextProvider>
-          <CssBaseline />
-          <App />
+          <GlobalContextProvider>
+            <CssBaseline />
+            <App />
+          </GlobalContextProvider>
         </AuthContextProvider>
       </ThemeProvider>
     </StyledEngineProvider>

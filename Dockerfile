@@ -12,3 +12,5 @@ FROM base AS build
 RUN yarn build
 
 FROM nginx:1.27.2-alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+ENTRYPOINT [ "nginx", "-g", "daemon off;" ]

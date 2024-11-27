@@ -4,14 +4,14 @@ import Footer from './Footer.tsx';
 
 type Props = { children?: React.ReactNode };
 
-const PageContainer: React.FC<Props> = (props) => {
+const PageContainer: React.FC<Props> = ({ children }) => {
   return (
     <>
       <Header />
-      <main className="w-full h-screen bg-main-img bg-cover bg-center bg-fixed"> {/*flex items-center justify-center*/}
+      <main className="w-full h-dvh bg-main-img bg-cover bg-center bg-fixed"> {/*flex items-center justify-center*/}
         {/*<div className="min-h-screen bg-gray-700 text-gray-900">*/}
 
-        {props.children}
+        {children}
         {/*</div>*/}
       </main>
       <Footer />

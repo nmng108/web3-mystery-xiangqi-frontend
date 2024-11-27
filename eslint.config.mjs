@@ -40,6 +40,7 @@ export default eslintTS.config(
       'prefer-const': 'warn',
       'import/no-unresolved': 'off',
       '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-wrapper-object-types': 'warn',
     },
   }
 );
