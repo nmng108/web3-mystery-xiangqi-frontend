@@ -3,7 +3,7 @@ import React from 'react';
 import { useAuthContext } from '../../hooks';
 
 const Leaderboard: React.FC = () => {
-  const { setIsAuthenticated } = useAuthContext();
+  const { setProvider } = useAuthContext();
 
   return (
     <PageContainer>

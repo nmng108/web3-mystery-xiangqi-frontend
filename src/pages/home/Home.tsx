@@ -6,6 +6,7 @@ import NormalModeLobby from '../../components/lobby/NormalModeLobby.tsx';
 import useGlobalContext from '../../hooks/useGlobalContext.ts';
 import GameTable from '../../components/gametable/GameTable.tsx';
 import { XiangqiBoard } from '../../components/xiangqiboard';
+import RankModeLobby from '../../components/lobby/RankModeLobby.tsx';
 
 enum GameMode {
   BOT,
@@ -31,7 +32,7 @@ const Home: React.FC = () => {
       case GameMode.RANK:
         return (
           <>
-            Rank
+            <RankModeLobby />
           </>
         );
       default:

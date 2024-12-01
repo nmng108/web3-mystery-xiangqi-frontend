@@ -47,7 +47,7 @@ const XiangqiBoard: React.FC = () => {
       </div>
       <div className="flex grow py-2 flex-col justify-center items-center space-y-4">
         <div className="py-4">
-          <PlayerTag player={table.players[0]} isHost={table.hostIndex == 0} />
+          {/*<PlayerTag player={table.players[0]} isHost={table.hostIndex == 0} />*/}
         </div>
         <div className="flex grow flex-none w-full bg-gray-300 justify-center items-center">
           <div
@@ -101,7 +101,7 @@ const XiangqiBoard: React.FC = () => {
           </div>
         </div>
         <div className="py-4">
-          <PlayerTag player={table.players[1]} isHost={table.hostIndex == 1} />
+          {/*<PlayerTag player={table.players[1]} isHost={table.hostIndex == 1} />*/}
         </div>
       </div>
     </div>

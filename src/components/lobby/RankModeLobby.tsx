@@ -58,20 +58,40 @@ class GameTable {
     return this._name;
   }
 
+  set name(value: string) {
+    this._name = value;
+  }
+
   get filledSlots(): number {
     return this._filledSlots;
+  }
+
+  set filledSlots(value: number) {
+    this._filledSlots = value;
   }
 
   get stake(): number {
     return this._stake;
   }
 
+  set stake(value: number) {
+    this._stake = value;
+  }
+
   get spectators(): number {
     return this._spectators;
   }
 
+  set spectators(value: number) {
+    this._spectators = value;
+  }
+
   get started(): boolean {
     return this._started;
+  }
+
+  set started(value: boolean) {
+    this._started = value;
   }
 }
 
@@ -88,7 +108,7 @@ const NormalModeLobby: React.FC<Props> = () => {
     }
 
     if (table != null) {
-      // setTable(null); // redundant
+      setTable(null); // redundant
     } else {
       setNormalRoomLevel(null);
     }
@@ -137,26 +157,14 @@ const NormalModeLobby: React.FC<Props> = () => {
   // Send API to request to fetch the selected table's detail info and then update DOM
   useEffect(() => {
     if (selectedTableId != null && selectedTableId != 0) {
-      // setTable({
-      //   id: selectedTableId,
-      //   // gameMode: GameMode,
-      //   name: '',
-      //   players: [
-      //     { address: '0x11111', name: 'namng108', elo: 270 },
-      //     { address: '0x9999999', name: 'Henry', elo: 220 },
-      //   ], // should be accessed using the constants 'BLACK', 'RED'
-      //   hostIndex: 0,
-      //   stake: 0,
-      //   timeControl: 20 * 3600,
-      //   matchId: undefined,
-      // });
+      setTable(null);
 
       setSelectedTableId(null);
     }
   }, [selectedTableId, setTable]);
 
   return (
-    <div className={`flex min-h-40 h-4/5 2xl:h-3/4 ${normalRoomLevel && 'border-2 border-solid border-black'} rounded-lg flex-col text-blue-950`}>
+    <div className="flex min-h-40 h-4/5 2xl:h-3/4 border-2 border-solid border-black rounded-lg flex-col text-blue-950">
       {normalRoomLevel ? (
         <>
           <div className="relative w-full h-12 justify-self-start">

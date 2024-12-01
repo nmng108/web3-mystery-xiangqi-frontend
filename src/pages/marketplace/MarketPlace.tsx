@@ -3,11 +3,7 @@ import React from 'react';
 import { useAuthContext } from '../../hooks';
 
 const MarketPlace: React.FC = () => {
-  const { setIsAuthenticated } = useAuthContext();
-
-  const handlePressOnLogout = () => {
-    setIsAuthenticated(false);
-  };
+  const { provider, signer, contract } = useAuthContext();
 
   return (
     <PageContainer>

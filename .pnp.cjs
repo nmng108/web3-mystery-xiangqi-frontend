@@ -33,6 +33,7 @@ const RAW_RUNTIME_STATE =
           ["@floating-ui/dom", "npm:1.6.11"],\
           ["@mui/icons-material", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:6.1.6"],\
           ["@mui/material", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:6.1.6"],\
+          ["@types/node", "npm:22.10.1"],\
           ["@types/react", "npm:18.3.10"],\
           ["@types/react-dom", "npm:18.3.0"],\
           ["@vitejs/plugin-react-swc", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:3.7.1"],\
@@ -45,6 +46,7 @@ const RAW_RUNTIME_STATE =
           ["eslint-plugin-jsdoc", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:50.4.3"],\
           ["eslint-plugin-react-hooks", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:5.1.0-rc-fb9a90fa48-20240614"],\
           ["eslint-plugin-react-refresh", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:0.4.12"],\
+          ["ethers", "npm:6.13.4"],\
           ["globals", "npm:15.9.0"],\
           ["husky", "npm:9.1.6"],\
           ["lint-staged", "npm:15.2.10"],\
@@ -60,6 +62,15 @@ const RAW_RUNTIME_STATE =
           ["vite", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:5.4.8"]\
         ],\
         "linkType": "SOFT"\
+      }]\
+    ]],\
+    ["@adraffy/ens-normalize", [\
+      ["npm:1.10.1", {\
+        "packageLocation": "./.yarn/cache/@adraffy-ens-normalize-npm-1.10.1-e60d7ca58d-4cb938c4ab.zip/node_modules/@adraffy/ens-normalize/",\
+        "packageDependencies": [\
+          ["@adraffy/ens-normalize", "npm:1.10.1"]\
+        ],\
+        "linkType": "HARD"\
       }]\
     ]],\
     ["@alloc/quick-lru", [\
@@ -1068,6 +1079,25 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["@noble/curves", [\
+      ["npm:1.2.0", {\
+        "packageLocation": "./.yarn/cache/@noble-curves-npm-1.2.0-9b40ee1239-94e02e9571.zip/node_modules/@noble/curves/",\
+        "packageDependencies": [\
+          ["@noble/curves", "npm:1.2.0"],\
+          ["@noble/hashes", "npm:1.3.2"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@noble/hashes", [\
+      ["npm:1.3.2", {\
+        "packageLocation": "./.yarn/cache/@noble-hashes-npm-1.3.2-1e619f9da0-685f59d2d4.zip/node_modules/@noble/hashes/",\
+        "packageDependencies": [\
+          ["@noble/hashes", "npm:1.3.2"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["@nodelib/fs.scandir", [\
       ["npm:2.1.5", {\
         "packageLocation": "./.yarn/cache/@nodelib-fs.scandir-npm-2.1.5-89c67370dd-6ab2a9b8a1.zip/node_modules/@nodelib/fs.scandir/",\
@@ -1482,6 +1512,24 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["@types/node", [\
+      ["npm:22.10.1", {\
+        "packageLocation": "./.yarn/cache/@types-node-npm-22.10.1-db989fc54b-c802a526da.zip/node_modules/@types/node/",\
+        "packageDependencies": [\
+          ["@types/node", "npm:22.10.1"],\
+          ["undici-types", "npm:6.20.0"]\
+        ],\
+        "linkType": "HARD"\
+      }],\
+      ["npm:22.7.5", {\
+        "packageLocation": "./.yarn/cache/@types-node-npm-22.7.5-0428b60a8c-e8ba102f8c.zip/node_modules/@types/node/",\
+        "packageDependencies": [\
+          ["@types/node", "npm:22.7.5"],\
+          ["undici-types", "npm:6.19.8"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["@types/parse-json", [\
       ["npm:4.0.2", {\
         "packageLocation": "./.yarn/cache/@types-parse-json-npm-4.0.2-f87f65692e-5bf62eec37.zip/node_modules/@types/parse-json/",\
@@ -1794,6 +1842,15 @@ const RAW_RUNTIME_STATE =
         "packagePeers": [\
           "@types/acorn",\
           "acorn"\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["aes-js", [\
+      ["npm:4.0.0-beta.5", {\
+        "packageLocation": "./.yarn/cache/aes-js-npm-4.0.0-beta.5-c70da65547-8f745da2e8.zip/node_modules/aes-js/",\
+        "packageDependencies": [\
+          ["aes-js", "npm:4.0.0-beta.5"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -3183,6 +3240,22 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["ethers", [\
+      ["npm:6.13.4", {\
+        "packageLocation": "./.yarn/cache/ethers-npm-6.13.4-62fa9271a7-221192fed9.zip/node_modules/ethers/",\
+        "packageDependencies": [\
+          ["ethers", "npm:6.13.4"],\
+          ["@adraffy/ens-normalize", "npm:1.10.1"],\
+          ["@noble/curves", "npm:1.2.0"],\
+          ["@noble/hashes", "npm:1.3.2"],\
+          ["@types/node", "npm:22.7.5"],\
+          ["aes-js", "npm:4.0.0-beta.5"],\
+          ["tslib", "npm:2.7.0"],\
+          ["ws", "virtual:62fa9271a73c66a8ce4dad93818af193b1be11d2cbbd129c9097a9a58bdf20612ab767949f84b2db724848f4ad0457e9f5aa6f1807839485397e78edeb67a6eb#npm:8.17.1"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["eventemitter3", [\
       ["npm:5.0.1", {\
         "packageLocation": "./.yarn/cache/eventemitter3-npm-5.0.1-5e423b7df3-ac6423ec31.zip/node_modules/eventemitter3/",\
@@ -4537,6 +4610,7 @@ const RAW_RUNTIME_STATE =
           ["@floating-ui/dom", "npm:1.6.11"],\
           ["@mui/icons-material", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:6.1.6"],\
           ["@mui/material", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:6.1.6"],\
+          ["@types/node", "npm:22.10.1"],\
           ["@types/react", "npm:18.3.10"],\
           ["@types/react-dom", "npm:18.3.0"],\
           ["@vitejs/plugin-react-swc", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:3.7.1"],\
@@ -4549,6 +4623,7 @@ const RAW_RUNTIME_STATE =
           ["eslint-plugin-jsdoc", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:50.4.3"],\
           ["eslint-plugin-react-hooks", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:5.1.0-rc-fb9a90fa48-20240614"],\
           ["eslint-plugin-react-refresh", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:0.4.12"],\
+          ["ethers", "npm:6.13.4"],\
           ["globals", "npm:15.9.0"],\
           ["husky", "npm:9.1.6"],\
           ["lint-staged", "npm:15.2.10"],\
@@ -6118,6 +6193,13 @@ const RAW_RUNTIME_STATE =
       }]\
     ]],\
     ["tslib", [\
+      ["npm:2.7.0", {\
+        "packageLocation": "./.yarn/cache/tslib-npm-2.7.0-21668f5c21-9a5b47ddac.zip/node_modules/tslib/",\
+        "packageDependencies": [\
+          ["tslib", "npm:2.7.0"]\
+        ],\
+        "linkType": "HARD"\
+      }],\
       ["npm:2.8.0", {\
         "packageLocation": "./.yarn/cache/tslib-npm-2.8.0-6ce3ffdd05-1bc7c43937.zip/node_modules/tslib/",\
         "packageDependencies": [\
@@ -6239,6 +6321,22 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["undici-types", [\
+      ["npm:6.19.8", {\
+        "packageLocation": "./.yarn/cache/undici-types-npm-6.19.8-9f12285b7a-cf0b48ed4f.zip/node_modules/undici-types/",\
+        "packageDependencies": [\
+          ["undici-types", "npm:6.19.8"]\
+        ],\
+        "linkType": "HARD"\
+      }],\
+      ["npm:6.20.0", {\
+        "packageLocation": "./.yarn/cache/undici-types-npm-6.20.0-bd21e669af-583ac7bbf4.zip/node_modules/undici-types/",\
+        "packageDependencies": [\
+          ["undici-types", "npm:6.20.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["unique-filename", [\
       ["npm:3.0.0", {\
         "packageLocation": "./.yarn/cache/unique-filename-npm-3.0.0-77d68e0a45-8e2f59b356.zip/node_modules/unique-filename/",\
@@ -6316,7 +6414,7 @@ const RAW_RUNTIME_STATE =
           ["vite", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:5.4.8"],\
           ["@types/less", null],\
           ["@types/lightningcss", null],\
-          ["@types/node", null],\
+          ["@types/node", "npm:22.10.1"],\
           ["@types/sass", null],\
           ["@types/sass-embedded", null],\
           ["@types/stylus", null],\
@@ -6437,6 +6535,32 @@ const RAW_RUNTIME_STATE =
           ["ansi-styles", "npm:6.2.1"],\
           ["string-width", "npm:7.2.0"],\
           ["strip-ansi", "npm:7.1.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["ws", [\
+      ["npm:8.17.1", {\
+        "packageLocation": "./.yarn/cache/ws-npm-8.17.1-f57fb24a2c-4264ae92c0.zip/node_modules/ws/",\
+        "packageDependencies": [\
+          ["ws", "npm:8.17.1"]\
+        ],\
+        "linkType": "SOFT"\
+      }],\
+      ["virtual:62fa9271a73c66a8ce4dad93818af193b1be11d2cbbd129c9097a9a58bdf20612ab767949f84b2db724848f4ad0457e9f5aa6f1807839485397e78edeb67a6eb#npm:8.17.1", {\
+        "packageLocation": "./.yarn/__virtual__/ws-virtual-1e3925b686/0/cache/ws-npm-8.17.1-f57fb24a2c-4264ae92c0.zip/node_modules/ws/",\
+        "packageDependencies": [\
+          ["ws", "virtual:62fa9271a73c66a8ce4dad93818af193b1be11d2cbbd129c9097a9a58bdf20612ab767949f84b2db724848f4ad0457e9f5aa6f1807839485397e78edeb67a6eb#npm:8.17.1"],\
+          ["@types/bufferutil", null],\
+          ["@types/utf-8-validate", null],\
+          ["bufferutil", null],\
+          ["utf-8-validate", null]\
+        ],\
+        "packagePeers": [\
+          "@types/bufferutil",\
+          "@types/utf-8-validate",\
+          "bufferutil",\
+          "utf-8-validate"\
         ],\
         "linkType": "HARD"\
       }]\

@@ -2,9 +2,7 @@ import { useContext } from 'react';
 import { GlobalContext } from '../context';
 
 const useGlobalContext = () => {
-  const context = useContext(GlobalContext);
-
-  return context;
+  return useContext(GlobalContext);
 };
 
 export default useGlobalContext;

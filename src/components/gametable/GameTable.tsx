@@ -12,7 +12,6 @@ import {
   Typography,
 } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import { TableEntity, Player } from '../../api/entities.ts';
 import PlayerTag from './PlayerTag.tsx';
 
 const GameTable: React.FC = () => {
@@ -75,11 +74,11 @@ const GameTable: React.FC = () => {
         <Typography variant="h5" className="my-auto">{normalRoomLevel!.name.toUpperCase()} - {table.name}</Typography>
       </div>
       <div className="flex h-full py-2 flex-col justify-between items-center">
-        <PlayerTag player={table.players[0]} isHost={table.hostIndex == 0} />
+        {/*<PlayerTag player={table.players[0]} isHost={table.hostIndex == 0} />*/}
         <div className="flex h-1/2 flex-col justify-between">
           <div className="flex h-2/3 flex-col justify-center">
             <div className="text-black text-5xl font-normal font-['Asul']">VS</div>
-            <div className="text-black text-md">Stake: {table.stake}G</div>
+            <div className="text-black text-md">Stake: {table.stake.toString()}G</div>
           </div>
           <div className="flex w-[30rem] flex-col items-center space-y-2">
             <Button variant="contained" className="w-1/2 text-black text-xl" onClick={handleStartNewMatch}>
@@ -168,7 +167,7 @@ const GameTable: React.FC = () => {
             </div>
           </div>
         </div>
-        <PlayerTag player={table.players[1]} isHost={table.hostIndex == 1} />
+        {/*<PlayerTag player={table.players[1]} isHost={table.hostIndex == 1} />*/}
       </div>
     </div>
   );
