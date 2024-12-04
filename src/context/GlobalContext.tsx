@@ -1,26 +1,70 @@
-import React, { createContext, PropsWithChildren, useState } from 'react';
-import { NormalRoomLevel } from '../constants';
+import React, { createContext, PropsWithChildren, useCallback, useEffect, useState } from 'react';
+import { LOCAL_STORAGE_KEYS, NormalRoomLevel } from '../constants';
 // import { TableEntity } from '../api/entities.ts';
 import AuthNavigator from '../navigations/AuthNavigator.tsx';
 import { MysteryChineseChess } from '../contracts/typechain-types';
+import MainNavigator from '../navigations/MainNavigator.tsx';
+import { createBrowserRouter } from 'react-router-dom';
 
-export interface GlobalContextProps {
-  router?: typeof AuthNavigator;
-  setRouter?: React.Dispatch<React.SetStateAction<typeof AuthNavigator>>;
-  normalRoomLevel?: NormalRoomLevel;
-  setNormalRoomLevel?: React.Dispatch<React.SetStateAction<NormalRoomLevel>>;
-  table?: MysteryChineseChess.TableStruct;
-  setTable?: React.Dispatch<React.SetStateAction<MysteryChineseChess.TableStruct>>;
+type ToastMessage = {
+  message: string;
+  level: 'success' | 'info' | 'warning' | 'error';
+  duration?: number;
 }
 
-export const GlobalContext = createContext<GlobalContextProps>({
-});
+export interface GlobalContextProps {
+  router: typeof AuthNavigator;
+  setRouter: React.Dispatch<React.SetStateAction<typeof AuthNavigator>>;
+  normalRoomLevel: NormalRoomLevel;
+  setNormalRoomLevel: React.Dispatch<React.SetStateAction<NormalRoomLevel>>;
+  currentTable: MysteryChineseChess.TableStruct;
+  setCurrentTableByTableStruct: (tableStruct: MysteryChineseChess.TableStruct) => void;
+  fullscreenToastMessage: ToastMessage;
+  setFullscreenToastMessage: React.Dispatch<React.SetStateAction<ToastMessage>>;
+}
+
+export const GlobalContext = createContext<GlobalContextProps>(undefined);
 
 export const GlobalContextProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [router, setRouter] = useState<typeof AuthNavigator>(AuthNavigator);
+  const [router, setRouter] = useState<typeof AuthNavigator>(createBrowserRouter([{ path: '', element: <div></div> }]));
   const [normalRoomLevel, setNormalRoomLevel] = useState<NormalRoomLevel>();
-  const [table, setTable] = useState<MysteryChineseChess.TableStruct>();
-  const contextParams: GlobalContextProps = { router, setRouter, normalRoomLevel, setNormalRoomLevel, table, setTable };
+  const [currentTable, setCurrentTable] = useState<MysteryChineseChess.TableStruct>();
+  const [fullscreenToastMessage, setFullscreenToastMessage] = useState<ToastMessage>();
+
+  const setCurrentTableByTableStruct = useCallback((tableStruct: MysteryChineseChess.TableStruct) => {
+    if (tableStruct) {
+      setCurrentTable({
+        id: tableStruct.id,
+        name: tableStruct.name,
+        gameMode: tableStruct.gameMode,
+        players: tableStruct.players,
+        hostIndex: tableStruct.hostIndex,
+        timeControl: tableStruct.timeControl,
+        stake: tableStruct.stake,
+        matchId: tableStruct.matchId,
+      });
+    } else {
+      setCurrentTable(null);
+    }
+  }, []);
+
+  const contextParams: GlobalContextProps = {
+    router,
+    setRouter,
+    normalRoomLevel,
+    setNormalRoomLevel,
+    currentTable,
+    setCurrentTableByTableStruct,
+    fullscreenToastMessage,
+    setFullscreenToastMessage,
+  };
+
+  useEffect(() => {
+    const localUserInfo: MysteryChineseChess.PlayerStruct = localStorage.getItem(LOCAL_STORAGE_KEYS.USER) as never;
+
+    console.log('In Global context: ' + (localUserInfo ? 'read user info' : 'not found user info'));
+    setRouter(localUserInfo ? MainNavigator : AuthNavigator);
+  }, []);
 
   return (
     <GlobalContext.Provider value={contextParams}>{children}</GlobalContext.Provider>

@@ -9,10 +9,10 @@ import { PieceColor, pieceImageMappings } from '../../constants';
 const XiangqiBoard: React.FC = () => {
   const [processor, setProcessor] = useState<XiangqiProcessor>(new DefaultXiangqiProcessor());
   const [selectedPiece, setSelectedPiece] = useState<Position>();
-  const { normalRoomLevel, table, setTable } = useGlobalContext();
+  const { normalRoomLevel, currentTable } = useGlobalContext();
 
   const handleBackButton = () => {
-    setTable(null);
+    // setTable(null);
   };
 
   const handleClickPiecePosition = (position: Position) => {
@@ -29,7 +29,7 @@ const XiangqiBoard: React.FC = () => {
     setSelectedPiece(null);
   };
 
-  if (table == null) {
+  if (currentTable == null) {
     return (
       <div>Game hasn't been started</div>
     );
@@ -43,7 +43,7 @@ const XiangqiBoard: React.FC = () => {
         <IconButton className="block absolute left-0 top-0 w-1/10 my-auto" onClick={handleBackButton}>
           <ArrowBackRoundedIcon />
         </IconButton>
-        <Typography variant="h5" className="my-auto">{normalRoomLevel!.name.toUpperCase()} - {table.name}</Typography>
+        <Typography variant="h5" className="my-auto">{normalRoomLevel!.name.toUpperCase()} - {currentTable.name}</Typography>
       </div>
       <div className="flex grow py-2 flex-col justify-center items-center space-y-4">
         <div className="py-4">

@@ -1,5 +1,6 @@
 import { Context, createContext, PropsWithChildren, useCallback, useEffect, useState } from 'react';
 import { CHAIN_ID } from '../contracts/abi';
+import { LOCAL_STORAGE_KEYS } from '../constants';
 
 
 // Type alias for a record where the keys are wallet identifiers and the values are account
@@ -37,11 +38,6 @@ interface WalletProviderContextProps {
 
 export const WalletProviderContext: Context<WalletProviderContextProps> = createContext<WalletProviderContextProps>(null);
 
-const localStorageItems: Record<string, string> = {
-  selectedWalletRdns: 'selectedWalletRdns',
-  selectedAccountByWalletRdns: 'selectedAccountByWalletRdns',
-};
-
 // The WalletProvider component wraps all other components in the dapp, providing them with the
 // necessary data and functions related to wallets.
 export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
@@ -61,7 +57,7 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
       setSelectedAccountAddressByWalletRdns(JSON.parse(savedSelectedAccountByWalletRdns));
     }
 
-    function onAnnouncement(event: EIP6963AnnounceProviderEvent) {
+    async function onAnnouncement(event: EIP6963AnnounceProviderEvent) {
       setWallets(currentWallets => ({
         ...currentWallets,
         [event.detail.info.rdns]: event.detail,
@@ -77,6 +73,54 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
     return () => window.removeEventListener('eip6963:announceProvider', onAnnouncement);
   }, []);
+
+  useEffect(() => {
+    const wallet: EIP6963ProviderDetail = selectedWalletRdns ? wallets[selectedWalletRdns] : null;
+
+    if (wallet) {
+      wallet.provider.on('accountsChanged', ([newAccount]) => {
+        const selectedAccountByWalletRdns = {
+          ...selectedAccountAddressByWalletRdns,
+          [wallet.info.rdns]: newAccount,
+        };
+
+        setSelectedAccountAddressByWalletRdns(selectedAccountByWalletRdns);
+        localStorage.setItem(LOCAL_STORAGE_KEYS.SELECTED_ACCOUNT_BY_WALLET_RDNS, JSON.stringify(selectedAccountByWalletRdns));
+      });
+
+      wallet.provider.on('chainChanged', (chainId) => {
+        if (chainId != CHAIN_ID) {
+          console.error('Connected chain\'s ID (%d) is not equal %d', chainId, CHAIN_ID);
+          setError(`Chain ID is not equal ${CHAIN_ID}`);
+        }
+      });
+    }
+
+    return () => {
+      if (wallet) {
+        wallet.provider.removeAllListeners('accountsChanged');
+      }
+    };
+  }, [selectedWalletRdns, wallets]);
+
+  // useEffect(() => {
+  //   // const wallet: EIP6963ProviderDetail = selectedWalletRdns ? wallets[selectedWalletRdns] : null;
+  //   if (selectedWalletRdns) {
+  //     localStorage.setItem(LOCAL_STORAGE_KEYS.SELECTED_WALLET_RDNS, selectedWalletRdns);
+  //   } else {
+  //     localStorage.removeItem(LOCAL_STORAGE_KEYS.SELECTED_WALLET_RDNS);
+  //   }
+  // }, [selectedWalletRdns]);
+  //
+  // useEffect(() => {
+  //   if (selectedAccountAddressByWalletRdns && Object.keys(selectedAccountAddressByWalletRdns).length > 0) {
+  //     localStorage.setItem(
+  //       LOCAL_STORAGE_KEYS.SELECTED_ACCOUNT_BY_WALLET_RDNS, JSON.stringify(selectedAccountAddressByWalletRdns),
+  //     );
+  //   } else {
+  //     localStorage.removeItem(LOCAL_STORAGE_KEYS.SELECTED_ACCOUNT_BY_WALLET_RDNS);
+  //   }
+  // }, [selectedAccountAddressByWalletRdns]);
 
   const connectWallet = useCallback(async (walletRdns: string) => {
     try {
@@ -97,21 +141,16 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
           [wallet.info.rdns]: accountAddresses[0],
         }));
 
-        localStorage.setItem(localStorageItems.selectedWalletRdns, wallet.info.rdns);
+        localStorage.setItem(LOCAL_STORAGE_KEYS.SELECTED_WALLET_RDNS, wallet.info.rdns);
         localStorage.setItem(
-          localStorageItems.selectedAccountByWalletRdns,
-          JSON.stringify({
-            ...selectedAccountAddressByWalletRdns,
-            [wallet.info.rdns]: accountAddresses[0],
-          }),
+          LOCAL_STORAGE_KEYS.SELECTED_ACCOUNT_BY_WALLET_RDNS,
+          JSON.stringify({ ...selectedAccountAddressByWalletRdns, [wallet.info.rdns]: accountAddresses[0] }),
         );
       }
     } catch (error) {
       console.error('Failed to connect to provider:', error);
       const walletError: WalletError = error as WalletError;
-      setError(
-        `Code: ${walletError.code} \nError Message: ${walletError.message}`,
-      );
+      setError(`Code: ${walletError.code} \nError Message: ${walletError.message}`);
     }
   }, [wallets, selectedAccountAddressByWalletRdns]);
 
@@ -123,8 +162,9 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
       }));
 
       const wallet: EIP6963ProviderDetail = wallets[selectedWalletRdns];
+
       setSelectedWalletRdns(null);
-      localStorage.removeItem(localStorageItems.selectedWalletRdns);
+      localStorage.removeItem(LOCAL_STORAGE_KEYS.SELECTED_WALLET_RDNS);
 
       try {
         await wallet.provider.request({

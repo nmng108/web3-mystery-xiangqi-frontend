@@ -29,6 +29,10 @@ declare module "hardhat/types/runtime" {
       name: "MysteryChineseChess",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MysteryChineseChess__factory>;
+    getContractFactory(
+      name: "StringUtils",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.StringUtils__factory>;
 
     getContractAt(
       name: "Ownable",
@@ -50,6 +54,11 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.MysteryChineseChess>;
+    getContractAt(
+      name: "StringUtils",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.StringUtils>;
 
     deployContract(
       name: "Ownable",
@@ -67,6 +76,10 @@ declare module "hardhat/types/runtime" {
       name: "MysteryChineseChess",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MysteryChineseChess>;
+    deployContract(
+      name: "StringUtils",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.StringUtils>;
 
     deployContract(
       name: "Ownable",
@@ -88,6 +101,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MysteryChineseChess>;
+    deployContract(
+      name: "StringUtils",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.StringUtils>;
 
     // default types
     getContractFactory(

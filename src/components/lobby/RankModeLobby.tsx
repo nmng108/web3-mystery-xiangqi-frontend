@@ -1,29 +1,24 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+  Backdrop,
   Button,
-  IconButton,
+  CircularProgress,
   Paper,
   Table,
   TableBody,
-  TableCell, TableCellProps,
+  TableCell,
   TableContainer,
   TableHead,
   TableRow,
   Typography,
 } from '@mui/material';
-import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import { useGlobalContext } from '../../hooks';
-import { NormalRoomLevel } from '../../constants';
+import { useAuthContext, useGlobalContext } from '../../hooks';
+import { MysteryChineseChess } from '../../contracts/typechain-types';
+import { ContractError } from '../../contracts/abi';
+import { Column, InLobbyTableData, RankModeTable } from '../gametable';
+import { isPositiveBigNumber } from '../../utilities';
 
 // import {Peer} from "https://esm.sh/peerjs@1.5.4?bundle-deps"
-
-interface Column extends TableCellProps {
-  id: keyof GameTable;
-  label: string;
-  minWidth?: number;
-  align?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
-  format?: (value: number) => string;
-}
 
 const columns: readonly Column[] = [
   { id: 'id', label: 'ID', minWidth: 20, align: 'center' },
@@ -33,229 +28,250 @@ const columns: readonly Column[] = [
   { id: 'stake', label: 'Stake', minWidth: 170, align: 'center', format: (value: number) => value.toFixed(10) },
 ];
 
-class GameTable {
-  private readonly _id: number;
-  private _name: string;
-  private _filledSlots: number;
-  private _stake: number;
-  private _spectators: number;
-  private _started: boolean;
+type Props = {
+  rendersLoadingPage: boolean,
+  setWaitForTransactionalActionMessage: React.Dispatch<React.SetStateAction<string>>,
+};
 
-  public constructor(id: number, name: string, filledSlots: number, stake: number, spectators: number, started: boolean) {
-    this._id = id;
-    this._name = name;
-    this._filledSlots = filledSlots;
-    this._stake = stake;
-    this._spectators = spectators;
-    this._started = started;
-  }
+/**
+ * Should only be rendered if user is currently not in any table.
+ * @param rendersLoadingPage
+ * @param setWaitForTransactionalActionMessage
+ */
+const RankModeLobby: React.FC<Props> = ({ rendersLoadingPage, setWaitForTransactionalActionMessage }) => {
+  const [gameTableList, setGameTableList] = useState<Array<InLobbyTableData>>([]);
+  const [loadingTableList, setLoadingTableList] = useState<boolean>(false);
+  const { currentTable, setCurrentTableByTableStruct, setFullscreenToastMessage } = useGlobalContext();
+  const { contract, user, setUserByPlayerStruct } = useAuthContext();
 
-  get id(): number {
-    return this._id;
-  }
+  /**
+   * Handle `onClick` event of the "Create table" button.
+   */
+  const handleCreateTable = useCallback(async () => {
+    setWaitForTransactionalActionMessage('Creating table...');
 
-  get name(): string {
-    return this._name;
-  }
+    try {
+      await contract.createTable(5 as never, 'random name' as never, 123 as never);
+      await contract.on(contract.filters.NewTableCreated, (newTable, logs) => {
+        if (newTable.players[0] != user.playerAddress) {
+          return;
+        }
 
-  set name(value: string) {
-    this._name = value;
-  }
+        setCurrentTableByTableStruct(newTable);
+        setUserByPlayerStruct({ ...user, tableId: newTable.id });
+        setFullscreenToastMessage({ message: 'Created table', level: 'success' });
+        setWaitForTransactionalActionMessage(undefined);
 
-  get filledSlots(): number {
-    return this._filledSlots;
-  }
+        contract.off(contract.filters.NewTableCreated);
+      });
+    } catch (err) {
+      console.log(err);
 
-  set filledSlots(value: number) {
-    this._filledSlots = value;
-  }
+      if ('info' in err && 'error' in err.info && err.info?.error?.code == 4001) {
+        setFullscreenToastMessage({ message: err.info.error.message, level: 'error', duration: 3000 });
+      } else {
+        setFullscreenToastMessage({ message: err.message, level: 'error' });
+      }
 
-  get stake(): number {
-    return this._stake;
-  }
-
-  set stake(value: number) {
-    this._stake = value;
-  }
-
-  get spectators(): number {
-    return this._spectators;
-  }
-
-  set spectators(value: number) {
-    this._spectators = value;
-  }
-
-  get started(): boolean {
-    return this._started;
-  }
-
-  set started(value: boolean) {
-    this._started = value;
-  }
-}
-
-type Props = object;
-
-const NormalModeLobby: React.FC<Props> = () => {
-  const [gameTableList, setGameTableList] = useState<Array<GameTable>>([]);
-  const { normalRoomLevel, setNormalRoomLevel, table, setTable } = useGlobalContext();
-  const [selectedTableId, setSelectedTableId] = useState<number>();
-
-  const handleBackButton = () => {
-    if (!normalRoomLevel) {
-      return;
+      setWaitForTransactionalActionMessage(undefined);
     }
+  }, [setWaitForTransactionalActionMessage, contract, setCurrentTableByTableStruct, setUserByPlayerStruct, user, setFullscreenToastMessage]);
 
-    if (table != null) {
-      setTable(null); // redundant
-    } else {
-      setNormalRoomLevel(null);
+  /**
+   * Handle `onClick` event of the "Reload" button.
+   */
+  const handleReloadList = useCallback(() => {
+    if (!loadingTableList) {
+      setLoadingTableList(true);
     }
-  };
+  }, [loadingTableList]);
 
-  const handleSelectRoomLevel = useCallback((roomLevel: NormalRoomLevel) => {
-    setNormalRoomLevel(roomLevel);
-  }, [setNormalRoomLevel]);
-
-  // TODO: replace the GameTable class with TableEntity
-  const handleEnterRoom = useCallback((gameTable: GameTable) => {
+  /**
+   * Handle `onClick` event of the "Enter" button.
+   */
+  const handleEnterTable = useCallback(async (gameTable: InLobbyTableData) => {
     if (gameTable.filledSlots == 2) {
-      alert('The selected table is full. You can be spectator or select another room.');
+      setFullscreenToastMessage({ message: 'This table is full. Please choose another one.', level: 'info' });
       return;
     }
 
-    // Send API to request to fetch the selected table's detail info and then update DOM
-    setSelectedTableId(gameTable.id);
-  }, []);
-
-  useEffect(() => {
-    // Call API to fetch table list
-    if (typeof normalRoomLevel !== 'undefined' && normalRoomLevel !== null) {
-      setGameTableList([
-        new GameTable(1, 'n0', 0, 0, 0, false),
-        new GameTable(2, 'n098', 1, 0.2241, 1, false),
-        new GameTable(3, 'n234', 2, 1.4513, 19, true),
-        new GameTable(4, 'n565', 1, 0.09419, 3, false),
-        new GameTable(5, 'nhtr', 1, 2.10193, 0, false),
-        new GameTable(6, 'nhtr', 1, 2.10193, 0, false),
-        new GameTable(7, 'nhtr', 1, 2.10193, 0, false),
-        new GameTable(8, 'nhtr', 1, 2.10193, 0, false),
-        new GameTable(9, 'nhtr', 1, 2.10193, 0, false),
-        new GameTable(10, 'nhtr', 1, 2.10193, 0, false),
-        new GameTable(6, 'nhtr', 1, 2.10193, 0, false),
-        new GameTable(6, 'nhtr', 1, 2.10193, 0, false),
-        new GameTable(6, 'nhtr', 1, 2.10193, 0, false),
-      ]);
+    if (!currentTable) {
+      setWaitForTransactionalActionMessage('Entering table...');
+      contract.joinTable(gameTable.id as never);
+      await contract.on(contract.filters.JoinedTable, (playerAddress, _tableId) => {
+        if ((playerAddress == user.playerAddress) && (_tableId == gameTable.id)) {
+          setUserByPlayerStruct({ ...user, tableId: _tableId });
+          setWaitForTransactionalActionMessage(undefined);
+          // console.log('Joined table %d', _tableId);
+          contract.off(contract.filters.JoinedTable);
+        }
+      });
+    } else {
+      setFullscreenToastMessage({ message: 'You have been joining in another table', level: 'error' });
     }
+  }, [currentTable, setFullscreenToastMessage, contract, user, setUserByPlayerStruct, setWaitForTransactionalActionMessage]);
 
-    return () => {
-      setGameTableList([]);
-    };
-  }, [normalRoomLevel, setGameTableList]);
+  /**
+   * Extracted from `useEffect` below to shorten that code block.
+   */
+  const loadTableList = useCallback(async (): Promise<void> => {
+    const list: InLobbyTableData[] = (await contract.getAllTables(5 as never, 1 as never, 20 as never).catch((err) => {
+      if (err.revert?.name === ContractError.ResourceNotFound) {
+        setFullscreenToastMessage({ message: 'Empty room!', level: 'info' });
+      }
 
-  // Send API to request to fetch the selected table's detail info and then update DOM
+      return [] as MysteryChineseChess.TableStructOutput[];
+    }))
+      .filter((t) => Number(t.id) != 0)
+      .map((t) => new InLobbyTableData(t));
+
+    setGameTableList(list);
+    // console.log('All tables', await contract.rankModeTableIndexes(0));
+  }, [contract, setFullscreenToastMessage]);
+
+  /**
+   * Load table list as soon as use opens this mode or a new contract is set.
+   */
   useEffect(() => {
-    if (selectedTableId != null && selectedTableId != 0) {
-      setTable(null);
-
-      setSelectedTableId(null);
+    if (contract) {
+      setLoadingTableList(true);
     }
-  }, [selectedTableId, setTable]);
+  }, [contract]);
+
+  /**
+   * This `useEffect` code block accomplishes the 2 following tasks:<br/>
+   * - Fetch table list at the first time visiting component (triggered by `useEffect` above).<br/>
+   * - Reload table list if user clicks "Reload".
+   */
+  useEffect(() => {
+    if (loadingTableList && contract) {
+      (async function() {
+        await loadTableList();
+        setLoadingTableList(false);
+      })();
+    }
+  }, [loadingTableList, contract]);
 
   return (
-    <div className="flex min-h-40 h-4/5 2xl:h-3/4 border-2 border-solid border-black rounded-lg flex-col text-blue-950">
-      {normalRoomLevel ? (
-        <>
-          <div className="relative w-full h-12 justify-self-start">
-            <IconButton className="block absolute left-0 top-0 w-1/10 my-auto" onClick={handleBackButton}>
-              <ArrowBackRoundedIcon />
-            </IconButton>
-            <Typography variant="h5" className="my-auto">{normalRoomLevel.name}</Typography>
+    <>
+      {/* Search */}
+      <div className="flex h-8 xl:h-12 2xl:h-16 justify-center items-center">
+        {!currentTable && (
+          <div className="flex space-x-20">
+            <Button variant="contained" color="info" className="bg-white text-black px-4 py-2 rounded">
+              Join randomly
+            </Button>
+            <Button
+              variant="contained" color="info"
+              className="bg-white text-black px-4 py-2 rounded"
+              onClick={handleCreateTable}
+            >
+              Create table
+            </Button>
           </div>
-          <Paper className="w-full overflow-hidden">
-            <TableContainer className="h-full">
-              <Table stickyHeader aria-label="sticky table">
-                <TableHead>
-                  <TableRow>
-                    {columns.map((column, i) => (
-                      <TableCell
-                        key={i}
-                        align={column.align}
-                        style={{ minWidth: column.minWidth }}
-                      >
-                        {column.id === 'id' ? '' : column.label}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {gameTableList //.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((gameTableData, i) => {
-                      return (
-                        <TableRow hover role="checkbox" tabIndex={-1} key={i}
-                                  className={`${gameTableData.started ? 'bg-blue-gray-500' : ''}`}
-                                  onClick={() => handleEnterRoom(gameTableData)}
-                        >
-                          {columns.map((column) => {
-                            const value = gameTableData[column.id];
-
-                            return (
-                              <TableCell key={column.id} align={column.align}>
-                                {column.format && typeof value === 'number' ?
-                                  column.format(value)
-                                  :
-                                  (column.id === 'filledSlots') ?
-                                    `${value}/2`
-                                    :
-                                    value}
-                              </TableCell>
-                            );
-                          })}
-                        </TableRow>
-                      );
-                    })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            {/*<TablePagination*/}
-            {/*  rowsPerPageOptions={[10, 25, 100]}*/}
-            {/*  component="div"*/}
-            {/*  count={tables.length}*/}
-            {/*  rowsPerPage={rowsPerPage}*/}
-            {/*  page={page}*/}
-            {/*  onPageChange={handleChangePage}*/}
-            {/*  onRowsPerPageChange={handleChangeRowsPerPage}*/}
-            {/*/>*/}
-          </Paper>
-        </>
-      ) : (
-        <div className="flex grow row-start-2 flex-col justify-center space-y-4">
-          <Button
-            variant="contained"
-            color="success"
-            className="p-4 rounded-lg shadow-md text-center"
-            onClick={() => handleSelectRoomLevel(NormalRoomLevel.BEGINNER)}>
-            <p className="font-semibold text-lg">Beginner room</p>
-          </Button>
-          <Button
-            variant="contained"
-            color="success"
-            className="p-4 rounded-lg shadow-md text-center"
-            onClick={() => handleSelectRoomLevel(NormalRoomLevel.INTERMEDIATE)}>
-            <p className="font-semibold text-lg">Intermediate room</p>
-          </Button>
-          <Button
-            variant="contained"
-            color="success"
-            className="p-4 rounded-lg shadow-md text-center"
-            onClick={() => handleSelectRoomLevel(NormalRoomLevel.ADVANCED)}>
-            <p className="font-semibold text-lg">Advanced room</p>
-          </Button>
+        )}
+      </div>
+      {/* Room Options */}
+      <div
+        className="flex grow w-full md:w-5/6 lg:w-4/5 xl:w-3/4 2xl:w-[50rem] box-border border-4 border-amber-950 rounded-2xl mx-auto flex-col justify-stretch items-stretch space-y-2">
+        <div className="flex h-8 justify-between">
+          {!currentTable && (
+            <>
+              <Button variant="contained" color="info" className="w-1/3 px-2 py-1" onClick={handleReloadList}>
+                Reload
+              </Button>
+              <div className="flex md:col-start-2 justify-end space-x-2">
+                <input
+                  type="text"
+                  placeholder="Find table..."
+                  className="px-2 py-1 rounded bg-gray-200 text-black"
+                />
+                <Button variant="contained" color="info" className="px-4 py-1">Enter</Button>
+              </div>
+            </>
+          )}
         </div>
-      )}
-    </div>
+
+        {!currentTable && (
+          <div
+            className={`flex min-h-40 h-4/5 2xl:h-3/4 border-2 border-solid border-black rounded-lg flex-col text-blue-950`}>
+
+            <div className="relative w-full h-12 justify-self-start">
+              {/*<IconButton className="block absolute left-0 top-0 w-1/10 my-auto" onClick={handleBackButton}>*/}
+              {/*  <ArrowBackRoundedIcon />*/}
+              {/*</IconButton>*/}
+              <Typography variant="h5" className="my-auto">Rank</Typography>
+            </div>
+            <Paper className="w-full overflow-hidden">
+              <TableContainer className="h-full">
+                <Table stickyHeader aria-label="sticky table">
+                  <TableHead>
+                    <TableRow>
+                      {columns.map((column, i) => (
+                        <TableCell
+                          key={i}
+                          align={column.align}
+                          style={{ minWidth: column.minWidth }}
+                        >
+                          {column.id === 'id' ? '' : column.label}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {gameTableList //.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      .map((gameTableData, i) => {
+                        return (
+                          <TableRow hover role="checkbox" tabIndex={-1} key={i}
+                                    className={`${gameTableData.started ? 'bg-blue-gray-500' : ''}`}
+                                    onClick={() => handleEnterTable(gameTableData)}
+                          >
+                            {columns.map((column) => {
+                              const value = gameTableData[column.id];
+
+                              return (
+                                <TableCell key={column.id} align={column.align}>
+                                  {column.format && typeof value === 'number' ?
+                                    column.format(value)
+                                    :
+                                    (column.id === 'filledSlots') ?
+                                      `${value.toString()}/2`
+                                      :
+                                      value.toString()}
+                                </TableCell>
+                              );
+                            })}
+                          </TableRow>
+                        );
+                      })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              {/*<TablePagination*/}
+              {/*  rowsPerPageOptions={[10, 25, 100]}*/}
+              {/*  component="div"*/}
+              {/*  count={tables.length}*/}
+              {/*  rowsPerPage={rowsPerPage}*/}
+              {/*  page={page}*/}
+              {/*  onPageChange={handleChangePage}*/}
+              {/*  onRowsPerPageChange={handleChangeRowsPerPage}*/}
+              {/*/>*/}
+            </Paper>
+            <Backdrop
+              sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
+              open={loadingTableList && rendersLoadingPage}
+            >
+              <CircularProgress color="inherit" /> Loading table list...
+            </Backdrop>
+          </div>
+        )}
+
+        {/*Render table if not entered game yet*/(currentTable && !isPositiveBigNumber(currentTable.matchId)) && (
+          <RankModeTable setWaitForTransactionalActionMessage={setWaitForTransactionalActionMessage} />
+        )}
+      </div>
+    </>
   );
 };
 
-export default NormalModeLobby;
+export default RankModeLobby;

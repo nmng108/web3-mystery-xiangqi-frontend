@@ -1,11 +1,8 @@
 import './App.css';
 import { RouterProvider } from 'react-router-dom';
-import AuthNavigator from './navigations/AuthNavigator.tsx';
-import MainNavigator from './navigations/MainNavigator.tsx';
-import { useAuthContext, useGlobalContext } from './hooks';
+import { useGlobalContext } from './hooks';
 
 function App() {
-  // const { user } = useAuthContext();
   const { router } = useGlobalContext();
 
   return (

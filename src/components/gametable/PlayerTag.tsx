@@ -24,7 +24,7 @@ const PlayerTag: React.FC<PlayerTagProps> = ({ player, isHost }) => {
       <img src={defaultAvatar} alt="Avatar" className="w-10 h-10 rounded-full" />
       <div className="flex flex-col items-start">
         <div className="text-black text-2xl font-normal font-['Arial']">
-          {(user.playerAddress == player.playerName) ? 'You' : player.playerName} {isHost ? '(Host)' : ''}
+          {(user.playerAddress == player.playerAddress) ? 'You' : player.playerName} {isHost ? '(Host)' : ''}
         </div>
         <div className="text-black text-base font-normal font-['Arial']">Elo: {player.elo.toString()}</div>
       </div>

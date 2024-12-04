@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useGlobalContext } from '../../hooks';
+import React, { useEffect, useState } from 'react';
+import { useAuthContext, useGlobalContext } from '../../hooks';
 import {
   Button,
   Dialog,
@@ -12,23 +12,51 @@ import {
   Typography,
 } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import PlayerTag from './PlayerTag.tsx';
+import PlayerTag from './PlayerTag';
+import { MysteryChineseChess } from '../../contracts/typechain-types';
 
-const GameTable: React.FC = () => {
+const NormalModeTable: React.FC = () => {
   // const [table, setTable] = useState<TableEntity>();
   const [opensStakeSetting, setOpensStakeSetting] = useState<boolean>(false);
   const [opensTableNameSetting, setOpensTableNameSetting] = useState<boolean>(false);
+  const [players, setPlayers] = useState<MysteryChineseChess.PlayerStruct[]>([null, null]);
   // const [processor, setProcessor] = useState<Processor>(null);
-  const { normalRoomLevel, setNormalRoomLevel, table, setTable } = useGlobalContext();
-  // const { user } = useAuthContext();
+  const { normalRoomLevel, setNormalRoomLevel, currentTable } = useGlobalContext();
+  const { contract, user } = useAuthContext();
+
+  useEffect(() => {
+    if (currentTable) {
+      (async function() {
+        const players: MysteryChineseChess.PlayerStruct[] = [null, null];
+
+        for (let i = 0; i < currentTable.players.length; i++) {
+          const address = currentTable.players[i];
+
+          if (BigInt(address as string) == BigInt(0)) {
+            continue;
+          }
+
+          if (user.playerAddress == address) {
+            players[i] = user;
+          } else {
+            players[i] = await contract.getPlayer(address as never);
+          }
+        }
+
+        setPlayers(players);
+      })();
+    } else {
+      setPlayers([]);
+    }
+  }, [currentTable]);
 
   const handleBackButton = () => {
     if (!normalRoomLevel) {
       return;
     }
 
-    if (table != null) {
-      setTable(null);
+    if (currentTable != null) {
+      // setTable(null);
     } else {
       setNormalRoomLevel(null); // redundant
     }
@@ -44,10 +72,10 @@ const GameTable: React.FC = () => {
 
   const handleStartNewMatch = () => {
     // Send various APIs: update states of players, create new match, update state of table
-    setTable((prev) =>  ({ ...prev, matchId: 1 }));
+    // setTable((prev) => ({ ...prev, matchId: 1 }));
   };
 
-  if (!table) {
+  if (!currentTable) {
     return (
       <div className="flex h-2/3 border-2 border-solid border-black rounded-2xl flex-col text-blue-950">
         <div className="relative w-full h-12 justify-self-start">
@@ -60,10 +88,10 @@ const GameTable: React.FC = () => {
     );
   }
 
-  if (table.matchId) {
+  if (currentTable.matchId) {
     return (
       <div>Return to game...</div>
-    )
+    );
   }
   return (
     <div className="flex h-2/3 border-2 border-solid border-black rounded-2xl flex-col text-blue-950">
@@ -71,14 +99,15 @@ const GameTable: React.FC = () => {
         <IconButton className="block absolute left-0 top-0 w-1/10 my-auto" onClick={handleBackButton}>
           <ArrowBackRoundedIcon />
         </IconButton>
-        <Typography variant="h5" className="my-auto">{normalRoomLevel!.name.toUpperCase()} - {table.name}</Typography>
+        <Typography variant="h5"
+                    className="my-auto">{normalRoomLevel && normalRoomLevel.name.toUpperCase() + ' - '}{currentTable.name}</Typography>
       </div>
       <div className="flex h-full py-2 flex-col justify-between items-center">
-        {/*<PlayerTag player={table.players[0]} isHost={table.hostIndex == 0} />*/}
+        <PlayerTag player={players[0]} isHost={currentTable.hostIndex == 0} />
         <div className="flex h-1/2 flex-col justify-between">
           <div className="flex h-2/3 flex-col justify-center">
             <div className="text-black text-5xl font-normal font-['Asul']">VS</div>
-            <div className="text-black text-md">Stake: {table.stake.toString()}G</div>
+            <div className="text-black text-md">Stake: {currentTable.stake?.toString()}G</div>
           </div>
           <div className="flex w-[30rem] flex-col items-center space-y-2">
             <Button variant="contained" className="w-1/2 text-black text-xl" onClick={handleStartNewMatch}>
@@ -167,10 +196,10 @@ const GameTable: React.FC = () => {
             </div>
           </div>
         </div>
-        {/*<PlayerTag player={table.players[1]} isHost={table.hostIndex == 1} />*/}
+        <PlayerTag player={players[1]} isHost={currentTable.hostIndex == 1} />
       </div>
     </div>
   );
 };
 
-export default GameTable;
+export default NormalModeTable;

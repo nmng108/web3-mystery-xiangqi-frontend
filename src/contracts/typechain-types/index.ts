@@ -2,5 +2,5 @@
 /* tslint:disable */
 /* eslint-disable */
 import type * as contracts from "./contracts";
+export * from "./contracts";
 export type { contracts };
-export type { MysteryChineseChess } from "./contracts";
