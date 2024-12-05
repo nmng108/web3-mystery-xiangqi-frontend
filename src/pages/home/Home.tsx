@@ -14,13 +14,15 @@ enum GameMode {
   None,
   BOT = 1,
   NORMAL = 2,
-  RANK = 5
+  RANK = 5,
 }
 
 const Home: React.FC = () => {
   const [activeMode, setActiveMode] = useState<GameMode>(GameMode.RANK);
-  const [waitForTransactionalActionMessage, setWaitForTransactionalActionMessage] = useState<string>();
-  const [userAndCurrentTableLoadingMessage, setUserAndCurrentTableLoadingMessage] = useState<string>();
+  const [waitForTransactionalActionMessage, setWaitForTransactionalActionMessage] =
+    useState<string>();
+  const [userAndCurrentTableLoadingMessage, setUserAndCurrentTableLoadingMessage] =
+    useState<string>();
   const {
     currentTable,
     setCurrentTableByTableStruct,
@@ -38,12 +40,13 @@ const Home: React.FC = () => {
   useEffect(() => {
     // Assure that this code block cannot be executed when user exits a table
     if (contract && isPositiveBigNumber(user?.tableId) && !currentTable) {
-      (async function() {
+      (async function () {
         const table = await contract.getTable(user.tableId as never).catch((err) => {
           console.log(err); // why always get this error in case where user.tableId haven't set to 0 but he had explicitly exited table before?
-          const message = (err.revert?.name == ContractError.ResourceNotFound)
-            ? 'Not found the last joined table. Back to lobby.'
-            : err.message;
+          const message =
+            err.revert?.name == ContractError.ResourceNotFound
+              ? 'Not found the last joined table. Back to lobby.'
+              : err.message;
 
           setFullscreenToastMessage({ message: message, level: 'error' });
           setCurrentTableByTableStruct(null);
@@ -53,49 +56,48 @@ const Home: React.FC = () => {
         });
 
         if (!table) {
-          setWaitForTransactionalActionMessage('Exiting from old table')
+          setWaitForTransactionalActionMessage('Exiting from old table');
 
-          await Promise.race([
-             await contract.updatePlayer('' as never, 0 as never, true as never),
-             await contract.on(contract.filters.UpdatedPlayerInfo, (playerAddress) => {
-              if (isSameAddress(playerAddress, user.playerAddress)) {
-                contract.off(contract.filters.UpdatedPlayerInfo);
-                setWaitForTransactionalActionMessage(undefined)
-                console.log('set tableId = 0 successfully via updatePlayer function');
-              }
-            }),
-          ]);
+          await contract.updatePlayer('' as never, 0 as never, true as never);
+          contract.on(contract.filters.UpdatedPlayerInfo, (playerAddress) => {
+            if (isSameAddress(playerAddress, user.playerAddress)) {
+              contract.off(contract.filters.UpdatedPlayerInfo);
+              setWaitForTransactionalActionMessage(undefined);
+              console.log('set tableId = 0 successfully via updatePlayer function');
+            }
+          });
         }
 
         setCurrentTableByTableStruct(table);
       })();
     }
-
-    // After completing `contract.exitTable()` and received ExitedTable event
-    // if (contract && user && !isPositiveBigNumber(user.tableId) && currentTable) {
-    //   setCurrentTableByTableStruct(null);
-    //   console.log("(Home) Set currentTable to null");
-    // }
   }, [contract, user, currentTable]);
 
   // [GUI] Show loading icon & prevent user from interacting with table list
   // while loading user's info and current table's info (if user has accessed a table before).
   useEffect(() => {
-    setUserAndCurrentTableLoadingMessage((!contract || !user)
-      ? 'Loading user information...'
-      : (isPositiveBigNumber(user.tableId) && !currentTable)
-        ? 'Entering table...'
-        : undefined);
+    setUserAndCurrentTableLoadingMessage(
+      !contract || !user
+        ? 'Loading user information...'
+        : isPositiveBigNumber(user.tableId) && !currentTable
+          ? 'Entering table...'
+          : undefined
+    );
   }, [contract, user, currentTable]);
 
-  const TableSelector: () => (React.JSX.Element | null) = useCallback(() => {
+  const TableSelector: () => React.JSX.Element | null = useCallback(() => {
     switch (activeMode) {
       case GameMode.BOT:
         return <BotModeSelector />;
       case GameMode.NORMAL:
         return <NormalModeLobby />;
       case GameMode.RANK:
-        return <RankModeLobby rendersLoadingPage={!userAndCurrentTableLoadingMessage} setWaitForTransactionalActionMessage={setWaitForTransactionalActionMessage} />;
+        return (
+          <RankModeLobby
+            rendersLoadingPage={!userAndCurrentTableLoadingMessage}
+            setWaitForTransactionalActionMessage={setWaitForTransactionalActionMessage}
+          />
+        );
       default:
         return null;
     }
@@ -108,23 +110,26 @@ const Home: React.FC = () => {
         {/* Game Mode Selector */}
         <div className="flex h-8 xl:h-12 2xl:h-16 justify-center items-center">
           {!currentTable && (
-            <ButtonGroup variant="outlined" className="flex w-1/2 min-h-min h-full rounded-2xl items-stretch">
+            <ButtonGroup
+              variant="outlined"
+              className="flex w-1/2 min-h-min h-full rounded-2xl items-stretch"
+            >
               <Button
-                variant={(activeMode === GameMode.BOT) ? 'contained' : 'outlined'}
+                variant={activeMode === GameMode.BOT ? 'contained' : 'outlined'}
                 className={`block flex-1 font-semibold`}
                 onClick={() => setActiveMode(GameMode.BOT)}
               >
                 Bot
               </Button>
               <Button
-                variant={(activeMode === GameMode.NORMAL) ? 'contained' : 'outlined'}
+                variant={activeMode === GameMode.NORMAL ? 'contained' : 'outlined'}
                 className={`block flex-1 font-semibold`}
                 onClick={() => setActiveMode(GameMode.NORMAL)}
               >
                 Normal
               </Button>
               <Button
-                variant={(activeMode === GameMode.RANK) ? 'contained' : 'outlined'}
+                variant={activeMode === GameMode.RANK ? 'contained' : 'outlined'}
                 className={`block flex-1 font-semibold`}
                 onClick={() => setActiveMode(GameMode.RANK)}
               >
@@ -134,14 +139,12 @@ const Home: React.FC = () => {
           )}
         </div>
 
-        {!isPositiveBigNumber(currentTable?.matchId)
-          ? <TableSelector />
-          : <XiangqiBoard />}
+        {!isPositiveBigNumber(currentTable?.matchId) ? <TableSelector /> : <XiangqiBoard />}
       </div>
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         // TransitionComponent={(props: SlideProps) => (<Slide {...props} direction="down" />)}
-        autoHideDuration={2000}
+        autoHideDuration={fullscreenToastMessage?.duration ?? 2000}
         open={!!fullscreenToastMessage}
         onClose={handleCloseToastMessage}
       >
@@ -151,7 +154,8 @@ const Home: React.FC = () => {
         sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
         open={!!waitForTransactionalActionMessage || !!userAndCurrentTableLoadingMessage}
       >
-        <CircularProgress color="inherit" /> {waitForTransactionalActionMessage ?? userAndCurrentTableLoadingMessage}
+        <CircularProgress color="inherit" />{' '}
+        {waitForTransactionalActionMessage ?? userAndCurrentTableLoadingMessage}
       </Backdrop>
     </PageContainer>
   );

@@ -11,6 +11,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "format": "prettier --check .",
     "prepare": "husky",
     "preview": "vite preview"
   },
@@ -57,8 +58,8 @@
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [
-      "eslint --fix",
-      "prettier -l --write"
+      "yarn eslint --fix",
+      "yarn prettier --list-different --write"
     ]
   }
 }

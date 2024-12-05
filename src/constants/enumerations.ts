@@ -28,7 +28,8 @@ export class NormalRoomLevel {
 
 export enum PieceColor {
   RED,
-  BLACK
+  BLACK,
+  NONE,
 }
 
 export enum Piece {
@@ -39,11 +40,11 @@ export enum Piece {
   Horse, // knight
   Chariot, // rook, car
   Cannon,
-  Soldier // pawn
+  Soldier, // pawn
 }
 
 export enum MatchStatus {
   Started,
   Paused,
-  Ended
+  Ended,
 }
