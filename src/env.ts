@@ -1,5 +1,5 @@
 export const CONTRACT_ADDRESS: string =
-  import.meta.env.CONTRACT_ADDRESS || '0x73511669fd4dE447feD18BB79bAFeAC93aB7F31f';
+  import.meta.env.CONTRACT_ADDRESS || '0x8fFbf6bED8E989688A9BF15203697F87CB63Dd2A';
 export const CHAIN_ID: number = import.meta.env.CHAIN_ID ?? 1337;
 export const PEER_SERVER_HOST: string = import.meta.env.PEER_SERVER_HOST ?? '192.168.0.101';
 export const PEER_SERVER_PORT: number = import.meta.env.PEER_SERVER_PORT ?? 9000;
