@@ -2,130 +2,233 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 import {
   DeployContractOptions,
   FactoryOptions,
   HardhatEthersHelpers as HardhatEthersHelpersBase,
-} from "@nomicfoundation/hardhat-ethers/types";
+} from '@nomicfoundation/hardhat-ethers/types';
 
-import * as Contracts from ".";
+import * as Contracts from '.';
 
-declare module "hardhat/types/runtime" {
+declare module 'hardhat/types/runtime' {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
     getContractFactory(
-      name: "Ownable",
+      name: 'Ownable',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Ownable__factory>;
     getContractFactory(
-      name: "Math",
+      name: 'IERC1155Errors',
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IERC1155Errors__factory>;
+    getContractFactory(
+      name: 'IERC20Errors',
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IERC20Errors__factory>;
+    getContractFactory(
+      name: 'IERC721Errors',
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IERC721Errors__factory>;
+    getContractFactory(
+      name: 'ERC20',
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ERC20__factory>;
+    getContractFactory(
+      name: 'IERC20Metadata',
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IERC20Metadata__factory>;
+    getContractFactory(
+      name: 'IERC20',
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IERC20__factory>;
+    getContractFactory(
+      name: 'Math',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Math__factory>;
     getContractFactory(
-      name: "Strings",
+      name: 'Strings',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Strings__factory>;
     getContractFactory(
-      name: "MysteryChineseChess",
+      name: 'GLDToken',
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.GLDToken__factory>;
+    getContractFactory(
+      name: 'MysteryChineseChess',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MysteryChineseChess__factory>;
     getContractFactory(
-      name: "StringUtils",
+      name: 'StringUtils',
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.StringUtils__factory>;
 
     getContractAt(
-      name: "Ownable",
+      name: 'Ownable',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.Ownable>;
     getContractAt(
-      name: "Math",
+      name: 'IERC1155Errors',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.Math>;
+    ): Promise<Contracts.IERC1155Errors>;
     getContractAt(
-      name: "Strings",
+      name: 'IERC20Errors',
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IERC20Errors>;
+    getContractAt(
+      name: 'IERC721Errors',
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IERC721Errors>;
+    getContractAt(
+      name: 'ERC20',
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ERC20>;
+    getContractAt(
+      name: 'IERC20Metadata',
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IERC20Metadata>;
+    getContractAt(
+      name: 'IERC20',
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IERC20>;
+    getContractAt(name: 'Math', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.Math>;
+    getContractAt(
+      name: 'Strings',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.Strings>;
     getContractAt(
-      name: "MysteryChineseChess",
+      name: 'GLDToken',
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.GLDToken>;
+    getContractAt(
+      name: 'MysteryChineseChess',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.MysteryChineseChess>;
     getContractAt(
-      name: "StringUtils",
+      name: 'StringUtils',
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.StringUtils>;
 
     deployContract(
-      name: "Ownable",
+      name: 'Ownable',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Ownable>;
     deployContract(
-      name: "Math",
+      name: 'IERC1155Errors',
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Math>;
+    ): Promise<Contracts.IERC1155Errors>;
     deployContract(
-      name: "Strings",
+      name: 'IERC20Errors',
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC20Errors>;
+    deployContract(
+      name: 'IERC721Errors',
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC721Errors>;
+    deployContract(name: 'ERC20', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ERC20>;
+    deployContract(
+      name: 'IERC20Metadata',
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC20Metadata>;
+    deployContract(name: 'IERC20', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IERC20>;
+    deployContract(name: 'Math', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.Math>;
+    deployContract(
+      name: 'Strings',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Strings>;
     deployContract(
-      name: "MysteryChineseChess",
+      name: 'GLDToken',
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.GLDToken>;
+    deployContract(
+      name: 'MysteryChineseChess',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MysteryChineseChess>;
     deployContract(
-      name: "StringUtils",
+      name: 'StringUtils',
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.StringUtils>;
 
     deployContract(
-      name: "Ownable",
+      name: 'Ownable',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Ownable>;
     deployContract(
-      name: "Math",
+      name: 'IERC1155Errors',
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC1155Errors>;
+    deployContract(
+      name: 'IERC20Errors',
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC20Errors>;
+    deployContract(
+      name: 'IERC721Errors',
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC721Errors>;
+    deployContract(
+      name: 'ERC20',
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ERC20>;
+    deployContract(
+      name: 'IERC20Metadata',
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC20Metadata>;
+    deployContract(
+      name: 'IERC20',
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IERC20>;
+    deployContract(
+      name: 'Math',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Math>;
     deployContract(
-      name: "Strings",
+      name: 'Strings',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Strings>;
     deployContract(
-      name: "MysteryChineseChess",
+      name: 'GLDToken',
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.GLDToken>;
+    deployContract(
+      name: 'MysteryChineseChess',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MysteryChineseChess>;
     deployContract(
-      name: "StringUtils",
+      name: 'StringUtils',
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.StringUtils>;
 
     // default types
-    getContractFactory(
-      name: string,
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<ethers.ContractFactory>;
-    getContractFactory(
-      abi: any[],
-      bytecode: ethers.BytesLike,
-      signer?: ethers.Signer
-    ): Promise<ethers.ContractFactory>;
+    getContractFactory(name: string, signerOrOptions?: ethers.Signer | FactoryOptions): Promise<ethers.ContractFactory>;
+    getContractFactory(abi: any[], bytecode: ethers.BytesLike, signer?: ethers.Signer): Promise<ethers.ContractFactory>;
     getContractAt(
       nameOrAbi: string | any[],
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<ethers.Contract>;
-    deployContract(
-      name: string,
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<ethers.Contract>;
+    deployContract(name: string, signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<ethers.Contract>;
     deployContract(
       name: string,
       args: any[],

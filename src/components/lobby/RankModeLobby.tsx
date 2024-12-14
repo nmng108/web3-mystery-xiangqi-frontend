@@ -16,7 +16,7 @@ import { useAuthContext, useGlobalContext } from '../../hooks';
 import { MysteryChineseChess } from '../../contracts/typechain-types';
 import { ContractError } from '../../contracts/abi';
 import { Column, InLobbyTableData, RankModeTable } from '../gametable';
-import { isPositiveBigNumber } from '../../utilities';
+import { getShortErrorMessage, isPositiveBigNumber } from '../../utilities';
 
 // import {Peer} from "https://esm.sh/peerjs@1.5.4?bundle-deps"
 
@@ -44,25 +44,21 @@ type Props = {
  * @param rendersLoadingPage
  * @param setWaitForTransactionalActionMessage
  */
-const RankModeLobby: React.FC<Props> = ({
-  rendersLoadingPage,
-  setWaitForTransactionalActionMessage,
-}) => {
+const RankModeLobby: React.FC<Props> = ({ rendersLoadingPage, setWaitForTransactionalActionMessage }) => {
   const [gameTableList, setGameTableList] = useState<Array<InLobbyTableData>>([]);
   const [loadingTableList, setLoadingTableList] = useState<boolean>(false);
-  const { currentTable, setCurrentTableByTableStruct, setFullscreenToastMessage } =
-    useGlobalContext();
+  const { currentTable, setCurrentTableByTableStruct, setFullscreenToastMessage } = useGlobalContext();
   const { contract, user, setUserByPlayerStruct } = useAuthContext();
 
   /**
    * Handle `onClick` event of the "Create table" button.
    */
-  const handleCreateTable = useCallback(() => {
+  const handleCreateTable = useCallback(async () => {
     setWaitForTransactionalActionMessage('Creating table...');
 
     try {
-      contract.createTable(5 as never, 'random name' as never, 123 as never);
-      contract.on(contract.filters.NewTableCreated, (newTable, logs) => {
+      await contract.createTable(5 as never, `${user.playerName}'s table` as never, 50 as never);
+      contract.on(contract.filters.NewTableCreated, (newTable) => {
         if (newTable.players[0] != user.playerAddress) {
           return;
         }
@@ -110,7 +106,7 @@ const RankModeLobby: React.FC<Props> = ({
    * Handle `onClick` event of the "Enter" button.
    */
   const handleEnterTable = useCallback(
-    (gameTable: InLobbyTableData) => {
+    async (gameTable: InLobbyTableData) => {
       if (gameTable.filledSlots == 2) {
         setFullscreenToastMessage({
           message: 'This table is full. Please choose another one.',
@@ -121,15 +117,22 @@ const RankModeLobby: React.FC<Props> = ({
 
       if (!currentTable) {
         setWaitForTransactionalActionMessage('Entering table...');
-        contract.joinTable(gameTable.id as never);
-        contract.on(contract.filters.JoinedTable, (playerAddress, _tableId) => {
-          if (playerAddress == user.playerAddress && _tableId == gameTable.id) {
-            contract.off(contract.filters.JoinedTable);
-            setUserByPlayerStruct({ ...user, tableId: _tableId });
-            setWaitForTransactionalActionMessage(undefined);
-            // console.log('Joined table %d', _tableId);
-          }
-        });
+        try {
+          await contract.joinTable(gameTable.id as never);
+          await contract.on(contract.filters.JoinedTable, (playerAddress, _tableId) => {
+            if (playerAddress == user.playerAddress && _tableId == gameTable.id) {
+              contract.off(contract.filters.JoinedTable);
+              setUserByPlayerStruct({ ...user, tableId: _tableId });
+              setWaitForTransactionalActionMessage(undefined);
+              // console.log('Joined table %d', _tableId);
+            }
+          });
+        } catch (err) {
+          const message: string = getShortErrorMessage(err);
+
+          setFullscreenToastMessage({ message: message, level: 'error' });
+          setWaitForTransactionalActionMessage(undefined);
+        }
       } else {
         setFullscreenToastMessage({
           message: 'You have been joining in another table',
@@ -188,7 +191,7 @@ const RankModeLobby: React.FC<Props> = ({
         setLoadingTableList(false);
       })();
     }
-  }, [loadingTableList, contract]);
+  }, [loadingTableList, contract, loadTableList]);
 
   return (
     <>
@@ -196,12 +199,7 @@ const RankModeLobby: React.FC<Props> = ({
       <div className="flex h-8 xl:h-12 2xl:h-16 justify-center items-center">
         {!currentTable && (
           <div className="flex space-x-20">
-            <Button
-              variant="contained"
-              color="info"
-              className={`bg-white px-4 py-2 rounded`}
-              disabled
-            >
+            <Button variant="contained" color="info" className={`bg-white px-4 py-2 rounded`} disabled>
               Join randomly
             </Button>
             <Button
@@ -220,12 +218,7 @@ const RankModeLobby: React.FC<Props> = ({
         <div className="flex h-8 justify-between">
           {!currentTable && (
             <>
-              <Button
-                variant="contained"
-                color="info"
-                className="w-1/3 px-2 py-1"
-                onClick={handleReloadList}
-              >
+              <Button variant="contained" color="info" className="w-1/3 px-2 py-1" onClick={handleReloadList}>
                 Reload
               </Button>
               <div className="flex md:col-start-2 justify-end space-x-2">
@@ -261,11 +254,7 @@ const RankModeLobby: React.FC<Props> = ({
                   <TableHead>
                     <TableRow>
                       {columns.map((column, i) => (
-                        <TableCell
-                          key={i}
-                          align={column.align}
-                          style={{ minWidth: column.minWidth }}
-                        >
+                        <TableCell key={i} align={column.align} style={{ minWidth: column.minWidth }}>
                           {column.id === 'id' ? '' : column.label}
                         </TableCell>
                       ))}
@@ -322,12 +311,9 @@ const RankModeLobby: React.FC<Props> = ({
         )}
 
         {
-          /*Render table if not entered game yet*/ currentTable &&
-            !isPositiveBigNumber(currentTable.matchId) && (
-              <RankModeTable
-                setWaitForTransactionalActionMessage={setWaitForTransactionalActionMessage}
-              />
-            )
+          /*Render table if not entered game yet*/ currentTable && !isPositiveBigNumber(currentTable.matchId) && (
+            <RankModeTable setWaitForTransactionalActionMessage={setWaitForTransactionalActionMessage} />
+          )
         }
       </div>
     </>

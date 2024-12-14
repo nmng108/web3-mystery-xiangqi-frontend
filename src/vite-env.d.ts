@@ -1,12 +1,18 @@
 /// <reference types="vite/client" />
 declare global {
-  namespace React {
-  }
+  namespace React {}
 
   namespace NodeJS {
     interface ProcessEnv {
       CONTRACT_ADDRESS: string;
       CHAIN_ID: number;
+      PEER_SERVER_HOST: string;
+      PEER_SERVER_PORT: number;
+      PEER_SERVER_PATH: string;
+      PEER_SERVER_SECURE: boolean; // SSL
+      PEER_SERVER_KEY: string | undefined;
+      PEER_SERVER_PING_INTERVAL: number; // unit: millisecond
+      PEER_SERVER_DEBUG: 0 | 1 | 2 | 3;
     }
   }
 
@@ -14,17 +20,18 @@ declare global {
     'eip6963:announceProvider': CustomEvent;
   }
 
-  interface Window { //adds definition to Document, but you can do the same with HTMLElement
+  interface Window {
+    //adds definition to Document, but you can do the same with HTMLElement
     addEventListener<K extends keyof WindowEventMap>(
       type: K,
-      listener: (this: Window, ev: WindowEventMap[K]) => void,
+      listener: (this: Window, ev: WindowEventMap[K]) => void
     ): void;
 
     dispatchEvent<K extends keyof WindowEventMap>(ev: WindowEventMap[K]): void;
 
     removeEventListener<K extends keyof WindowEventMap>(
       type: K,
-      listener: (this: Window, ev: WindowEventMap[K]) => void,
+      listener: (this: Window, ev: WindowEventMap[K]) => void
     ): void;
   }
 }
@@ -44,16 +51,13 @@ interface EIP1193Provider {
   path?: string;
   sendAsync?: (
     request: { method: string; params?: Array<unknown> },
-    callback: (error: Error | null, response: unknown) => void,
+    callback: (error: Error | null, response: unknown) => void
   ) => void;
   send?: (
     request: { method: string; params?: Array<unknown> },
-    callback: (error: Error | null, response: unknown) => void,
+    callback: (error: Error | null, response: unknown) => void
   ) => void;
-  request: (request: {
-    method: ProviderRequestMethod
-    params?: Array<unknown>
-  }) => Promise<unknown>;
+  request: (request: { method: ProviderRequestMethod; params?: Array<unknown> }) => Promise<unknown>;
 
   /**
    * Fired when the user's accounts change.
@@ -124,10 +128,10 @@ interface EIP6963ProviderDetail {
 // Represents the structure of an event dispatched by a wallet to announce its presence based on EIP-6963.
 type EIP6963AnnounceProviderEvent = Event & {
   detail: {
-    info: EIP6963ProviderInfo
-    provider: Readonly<EIP1193Provider>
-  }
-}
+    info: EIP6963ProviderInfo;
+    provider: Readonly<EIP1193Provider>;
+  };
+};
 
 // An error object with optional properties, commonly encountered when handling eth_requestAccounts errors.
 interface WalletError {
@@ -137,17 +141,17 @@ interface WalletError {
     error: {
       code: number;
       message: string;
-    }
-  }
+    };
+  };
 }
 
 type EthereumProviderEvent =
   | 'accountsChanged' // Fired when wallet accounts change
-  | 'chainChanged'    // Fired when the active chain/network changes
-  | 'connect'         // Fired when the provider connects to the network
-  | 'disconnect'      // Fired when the provider disconnects
-  | 'message'         // Fired for provider-specific messages
-  | 'data';           // Fired for subscription events (logs, blocks, etc.)
+  | 'chainChanged' // Fired when the active chain/network changes
+  | 'connect' // Fired when the provider connects to the network
+  | 'disconnect' // Fired when the provider disconnects
+  | 'message' // Fired for provider-specific messages
+  | 'data'; // Fired for subscription events (logs, blocks, etc.)
 
 interface ProviderMessage {
   type: string; // The type of message (e.g., "eth_subscription")
@@ -160,73 +164,73 @@ interface ProviderSubscriptionData {
 }
 
 type ProviderRequestMethod =
-// Ethereum Accounts
-  | 'eth_accounts'                    // Get all connected accounts
-  | 'eth_requestAccounts'             // Request account access
+  // Ethereum Accounts
+  | 'eth_accounts' // Get all connected accounts
+  | 'eth_requestAccounts' // Request account access
 
   // Blockchain Information
-  | 'eth_chainId'                     // Get current chain ID
-  | 'net_version'                     // Get network version
-  | 'eth_blockNumber'                 // Get the latest block number
-  | 'eth_getBlockByHash'              // Get block by hash
-  | 'eth_getBlockByNumber'            // Get block by number
+  | 'eth_chainId' // Get current chain ID
+  | 'net_version' // Get network version
+  | 'eth_blockNumber' // Get the latest block number
+  | 'eth_getBlockByHash' // Get block by hash
+  | 'eth_getBlockByNumber' // Get block by number
   | 'eth_getBlockTransactionCountByHash' // Get transaction count for a block by hash
   | 'eth_getBlockTransactionCountByNumber' // Get transaction count for a block by number
-  | 'eth_getCode'                     // Get the contract code at a specific address
-  | 'eth_getStorageAt'                // Get storage data at a specific position for an address
-  | 'eth_getLogs'                     // Get logs based on filter options
+  | 'eth_getCode' // Get the contract code at a specific address
+  | 'eth_getStorageAt' // Get storage data at a specific position for an address
+  | 'eth_getLogs' // Get logs based on filter options
 
   // Account and Signing
-  | 'eth_sign'                        // Sign arbitrary data
-  | 'personal_sign'                   // Sign data with a personal message prefix
-  | 'eth_signTypedData'               // Sign typed data (EIP-712, legacy)
-  | 'eth_signTypedData_v4'            // Sign typed data (EIP-712, version 4)
+  | 'eth_sign' // Sign arbitrary data
+  | 'personal_sign' // Sign data with a personal message prefix
+  | 'eth_signTypedData' // Sign typed data (EIP-712, legacy)
+  | 'eth_signTypedData_v4' // Sign typed data (EIP-712, version 4)
 
   // Transactions
-  | 'eth_sendTransaction'             // Send a transaction (requires user confirmation)
-  | 'eth_sendRawTransaction'          // Send a raw, signed transaction
-  | 'eth_getTransactionByHash'        // Get transaction details by hash
-  | 'eth_getTransactionReceipt'       // Get the receipt for a transaction
-  | 'eth_getTransactionCount'         // Get the number of transactions sent from an address (nonce)
+  | 'eth_sendTransaction' // Send a transaction (requires user confirmation)
+  | 'eth_sendRawTransaction' // Send a raw, signed transaction
+  | 'eth_getTransactionByHash' // Get transaction details by hash
+  | 'eth_getTransactionReceipt' // Get the receipt for a transaction
+  | 'eth_getTransactionCount' // Get the number of transactions sent from an address (nonce)
 
   // Smart Contract Calls
-  | 'eth_call'                        // Call a contract method (read-only, no state changes)
-  | 'eth_estimateGas'                 // Estimate gas required for a transaction
-  | 'eth_getBalance'                  // Get the balance of an address
+  | 'eth_call' // Call a contract method (read-only, no state changes)
+  | 'eth_estimateGas' // Estimate gas required for a transaction
+  | 'eth_getBalance' // Get the balance of an address
   | 'eth_getTransactionByBlockHashAndIndex' // Get transaction by block hash and index
   | 'eth_getTransactionByBlockNumberAndIndex' // Get transaction by block number and index
 
   // Gas Pricing
-  | 'eth_gasPrice'                    // Get the current gas price
-  | 'eth_maxPriorityFeePerGas'        // Get the max priority fee for EIP-1559 transactions
+  | 'eth_gasPrice' // Get the current gas price
+  | 'eth_maxPriorityFeePerGas' // Get the max priority fee for EIP-1559 transactions
 
   // Wallet Management
-  | 'wallet_addEthereumChain'         // Add a new network (EIP-3085)
-  | 'wallet_switchEthereumChain'      // Switch to an existing network (EIP-3326)
-  | 'wallet_watchAsset'               // Watch an asset (e.g., token) in the wallet (EIP-747)
-  | 'wallet_revokePermissions'        //
+  | 'wallet_addEthereumChain' // Add a new network (EIP-3085)
+  | 'wallet_switchEthereumChain' // Switch to an existing network (EIP-3326)
+  | 'wallet_watchAsset' // Watch an asset (e.g., token) in the wallet (EIP-747)
+  | 'wallet_revokePermissions' //
 
   // Filters (deprecated in some cases)
-  | 'eth_newFilter'                   // Create a new filter object
-  | 'eth_newBlockFilter'              // Create a new block filter
+  | 'eth_newFilter' // Create a new filter object
+  | 'eth_newBlockFilter' // Create a new block filter
   | 'eth_newPendingTransactionFilter' // Create a filter for pending transactions
-  | 'eth_uninstallFilter'             // Remove a filter object
-  | 'eth_getFilterChanges'            // Get filter changes (polling)
-  | 'eth_getFilterLogs'               // Get all logs for a filter
+  | 'eth_uninstallFilter' // Remove a filter object
+  | 'eth_getFilterChanges' // Get filter changes (polling)
+  | 'eth_getFilterLogs' // Get all logs for a filter
 
   // Debugging and Tracing
-  | 'debug_traceTransaction'          // Debug a transaction (requires RPC with debugging enabled)
+  | 'debug_traceTransaction' // Debug a transaction (requires RPC with debugging enabled)
 
   // Ethereum Node Information
-  | 'web3_clientVersion'              // Get the client version of the Ethereum node
-  | 'web3_sha3'                       // Hash data using Keccak256
+  | 'web3_clientVersion' // Get the client version of the Ethereum node
+  | 'web3_sha3' // Hash data using Keccak256
 
   // Custom Methods Specific to MetaMask
-  | 'wallet_requestPermissions'       // Request wallet-specific permissions
-  | 'wallet_getPermissions'           // Get current wallet-specific permissions
-  | 'wallet_registerOnboarding'       // Start onboarding a user (MetaMask-specific)
-  | 'wallet_snap'                     // MetaMask Snap API (for extensions)
+  | 'wallet_requestPermissions' // Request wallet-specific permissions
+  | 'wallet_getPermissions' // Get current wallet-specific permissions
+  | 'wallet_registerOnboarding' // Start onboarding a user (MetaMask-specific)
+  | 'wallet_snap' // MetaMask Snap API (for extensions)
 
   // Other
-  | 'eth_subscribe'                   // Subscribe to events (e.g., new blocks, logs)
-  | 'eth_unsubscribe';                // Unsubscribe from events
+  | 'eth_subscribe' // Subscribe to events (e.g., new blocks, logs)
+  | 'eth_unsubscribe'; // Unsubscribe from events

@@ -26,25 +26,12 @@ export class NormalRoomLevel {
   }
 }
 
-export enum PieceColor {
-  RED,
-  BLACK,
+export enum UserInterfaceMatchState {
   NONE,
-}
-
-export enum Piece {
-  None,
-  General, // king
-  Advisor, // guard, assistant
-  Elephant, // bishop
-  Horse, // knight
-  Chariot, // rook, car
-  Cannon,
-  Soldier, // pawn
-}
-
-export enum MatchStatus {
-  Started,
-  Paused,
-  Ended,
+  STARTING,
+  PLAYING,
+  HANG_FOR_MOVE_VALIDATION_BY_PEER,
+  PAUSED,
+  PAUSED_DUE_TO_DISCONNECTION,
+  ENDED,
 }

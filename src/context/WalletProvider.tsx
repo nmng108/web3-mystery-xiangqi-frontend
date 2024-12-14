@@ -1,11 +1,10 @@
 import { Context, createContext, PropsWithChildren, useCallback, useEffect, useState } from 'react';
-import { CHAIN_ID } from '../contracts/abi';
+import { CHAIN_ID } from '../env.ts';
 import { LOCAL_STORAGE_KEYS } from '../constants';
-
 
 // Type alias for a record where the keys are wallet identifiers and the values are account
 // addresses or null.
-type SelectedAccountByWallet = Record<string, string | null>
+type SelectedAccountByWallet = Record<string, string | null>;
 
 // Context interface for the EIP-6963 provider.
 interface WalletProviderContextProps {
@@ -36,14 +35,17 @@ interface WalletProviderContextProps {
   clearError: () => void;
 }
 
-export const WalletProviderContext: Context<WalletProviderContextProps> = createContext<WalletProviderContextProps>(null);
+export const WalletProviderContext: Context<WalletProviderContextProps> =
+  createContext<WalletProviderContextProps>(null);
 
 // The WalletProvider component wraps all other components in the dapp, providing them with the
 // necessary data and functions related to wallets.
 export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [wallets, setWallets] = useState<Record<string, EIP6963ProviderDetail>>({});
   const [selectedWalletRdns, setSelectedWalletRdns] = useState<string | null>(null);
-  const [selectedAccountAddressByWalletRdns, setSelectedAccountAddressByWalletRdns] = useState<SelectedAccountByWallet>({});
+  const [selectedAccountAddressByWalletRdns, setSelectedAccountAddressByWalletRdns] = useState<SelectedAccountByWallet>(
+    {}
+  );
 
   const [errorMessage, setErrorMessage] = useState<string>('');
   const clearError = () => setErrorMessage('');
@@ -58,12 +60,12 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
     }
 
     async function onAnnouncement(event: EIP6963AnnounceProviderEvent) {
-      setWallets(currentWallets => ({
+      setWallets((currentWallets) => ({
         ...currentWallets,
         [event.detail.info.rdns]: event.detail,
       }));
 
-      if (savedSelectedWalletRdns && (event.detail.info.rdns === savedSelectedWalletRdns)) {
+      if (savedSelectedWalletRdns && event.detail.info.rdns === savedSelectedWalletRdns) {
         setSelectedWalletRdns(savedSelectedWalletRdns);
       }
     }
@@ -85,12 +87,15 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
         };
 
         setSelectedAccountAddressByWalletRdns(selectedAccountByWalletRdns);
-        localStorage.setItem(LOCAL_STORAGE_KEYS.SELECTED_ACCOUNT_BY_WALLET_RDNS, JSON.stringify(selectedAccountByWalletRdns));
+        localStorage.setItem(
+          LOCAL_STORAGE_KEYS.SELECTED_ACCOUNT_BY_WALLET_RDNS,
+          JSON.stringify(selectedAccountByWalletRdns)
+        );
       });
 
       wallet.provider.on('chainChanged', (chainId) => {
         if (chainId != CHAIN_ID) {
-          console.error('Connected chain\'s ID (%d) is not equal %d', chainId, CHAIN_ID);
+          console.error("Connected chain's ID (%d) is not equal %d", chainId, CHAIN_ID);
           setError(`Chain ID is not equal ${CHAIN_ID}`);
         }
       });
@@ -122,37 +127,42 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
   //   }
   // }, [selectedAccountAddressByWalletRdns]);
 
-  const connectWallet = useCallback(async (walletRdns: string) => {
-    try {
-      const wallet: EIP6963ProviderDetail = wallets[walletRdns];
-      const accountAddresses: string[] = (await wallet.provider.request({ method: 'eth_requestAccounts' })) as string[];
-      const chainId: number = (await wallet.provider.request({ method: 'eth_chainId' })) as number;
+  const connectWallet = useCallback(
+    async (walletRdns: string) => {
+      try {
+        const wallet: EIP6963ProviderDetail = wallets[walletRdns];
+        const accountAddresses: string[] = (await wallet.provider.request({
+          method: 'eth_requestAccounts',
+        })) as string[];
+        const chainId: number = (await wallet.provider.request({ method: 'eth_chainId' })) as number;
 
-      if (chainId != CHAIN_ID) {
-        console.error('Connected chain\'s ID (%d) is not equal %d', chainId, CHAIN_ID);
-        setError(`Chain ID is not equal ${CHAIN_ID}`);
-        return;
+        if (chainId != CHAIN_ID) {
+          console.error("Connected chain's ID (%d) is not equal %d", chainId, CHAIN_ID);
+          setError(`Chain ID is not equal ${CHAIN_ID}`);
+          return;
+        }
+
+        if (accountAddresses?.[0]) {
+          setSelectedWalletRdns(wallet.info.rdns);
+          setSelectedAccountAddressByWalletRdns((currentAccounts) => ({
+            ...currentAccounts,
+            [wallet.info.rdns]: accountAddresses[0],
+          }));
+
+          localStorage.setItem(LOCAL_STORAGE_KEYS.SELECTED_WALLET_RDNS, wallet.info.rdns);
+          localStorage.setItem(
+            LOCAL_STORAGE_KEYS.SELECTED_ACCOUNT_BY_WALLET_RDNS,
+            JSON.stringify({ ...selectedAccountAddressByWalletRdns, [wallet.info.rdns]: accountAddresses[0] })
+          );
+        }
+      } catch (error) {
+        console.error('Failed to connect to provider:', error);
+        const walletError: WalletError = error as WalletError;
+        setError(`Code: ${walletError.code} \nError Message: ${walletError.message}`);
       }
-
-      if (accountAddresses?.[0]) {
-        setSelectedWalletRdns(wallet.info.rdns);
-        setSelectedAccountAddressByWalletRdns((currentAccounts) => ({
-          ...currentAccounts,
-          [wallet.info.rdns]: accountAddresses[0],
-        }));
-
-        localStorage.setItem(LOCAL_STORAGE_KEYS.SELECTED_WALLET_RDNS, wallet.info.rdns);
-        localStorage.setItem(
-          LOCAL_STORAGE_KEYS.SELECTED_ACCOUNT_BY_WALLET_RDNS,
-          JSON.stringify({ ...selectedAccountAddressByWalletRdns, [wallet.info.rdns]: accountAddresses[0] }),
-        );
-      }
-    } catch (error) {
-      console.error('Failed to connect to provider:', error);
-      const walletError: WalletError = error as WalletError;
-      setError(`Code: ${walletError.code} \nError Message: ${walletError.message}`);
-    }
-  }, [wallets, selectedAccountAddressByWalletRdns]);
+    },
+    [wallets, selectedAccountAddressByWalletRdns]
+  );
 
   const disconnectWallet = useCallback(async () => {
     if (selectedWalletRdns) {
@@ -179,15 +189,13 @@ export const WalletProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   const contextValue: WalletProviderContextProps = {
     wallets,
-    selectedWallet: (selectedWalletRdns === null) ? null : wallets[selectedWalletRdns],
-    selectedAccount: (selectedWalletRdns === null) ? null : selectedAccountAddressByWalletRdns[selectedWalletRdns],
+    selectedWallet: selectedWalletRdns === null ? null : wallets[selectedWalletRdns],
+    selectedAccount: selectedWalletRdns === null ? null : selectedAccountAddressByWalletRdns[selectedWalletRdns],
     errorMessage,
     connectWallet,
     disconnectWallet,
     clearError,
   };
 
-  return (
-    <WalletProviderContext.Provider value={contextValue}>{children}</WalletProviderContext.Provider>
-  );
+  return <WalletProviderContext.Provider value={contextValue}>{children}</WalletProviderContext.Provider>;
 };

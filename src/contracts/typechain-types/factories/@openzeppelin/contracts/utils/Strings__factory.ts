@@ -30,9 +30,8 @@ const _bytecode =
 
 type StringsConstructorParams = [signer?: Signer] | ConstructorParameters<typeof ContractFactory>;
 
-const isSuperArgs = (
-  xs: StringsConstructorParams
-): xs is ConstructorParameters<typeof ContractFactory> => xs.length > 1;
+const isSuperArgs = (xs: StringsConstructorParams): xs is ConstructorParameters<typeof ContractFactory> =>
+  xs.length > 1;
 
 export class Strings__factory extends ContractFactory {
   constructor(...args: StringsConstructorParams) {

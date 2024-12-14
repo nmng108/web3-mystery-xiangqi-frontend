@@ -26,6 +26,7 @@ import type {
 export declare namespace MysteryChineseChess {
   export type MatchResultStruct = {
     winnerIndex: BigNumberish;
+    offererIndex: BigNumberish;
     resultType: BigNumberish;
     increasingElo: BigNumberish;
     decreasingElo: BigNumberish;
@@ -33,14 +34,107 @@ export declare namespace MysteryChineseChess {
 
   export type MatchResultStructOutput = [
     winnerIndex: bigint,
+    offererIndex: bigint,
     resultType: bigint,
     increasingElo: bigint,
     decreasingElo: bigint,
   ] & {
     winnerIndex: bigint;
+    offererIndex: bigint;
     resultType: bigint;
     increasingElo: bigint;
     decreasingElo: bigint;
+  };
+
+  export type PlayerPieceStruct = {
+    color: BigNumberish;
+    piece: BigNumberish;
+    unfolded: boolean;
+  };
+
+  export type PlayerPieceStructOutput = [color: bigint, piece: bigint, unfolded: boolean] & {
+    color: bigint;
+    piece: bigint;
+    unfolded: boolean;
+  };
+
+  export type PositionStruct = { y: BigNumberish; x: BigNumberish };
+
+  export type PositionStructOutput = [y: bigint, x: bigint] & {
+    y: bigint;
+    x: bigint;
+  };
+
+  export type MoveDetailsStruct = {
+    playerIndex: BigNumberish;
+    oldPosition: MysteryChineseChess.PositionStruct;
+    newPosition: MysteryChineseChess.PositionStruct;
+    timestamp: BigNumberish;
+  };
+
+  export type MoveDetailsStructOutput = [
+    playerIndex: bigint,
+    oldPosition: MysteryChineseChess.PositionStructOutput,
+    newPosition: MysteryChineseChess.PositionStructOutput,
+    timestamp: bigint,
+  ] & {
+    playerIndex: bigint;
+    oldPosition: MysteryChineseChess.PositionStructOutput;
+    newPosition: MysteryChineseChess.PositionStructOutput;
+    timestamp: bigint;
+  };
+
+  export type MoveStruct = {
+    details: MysteryChineseChess.MoveDetailsStruct;
+    signatures: [string, string];
+  };
+
+  export type MoveStructOutput = [
+    details: MysteryChineseChess.MoveDetailsStructOutput,
+    signatures: [string, string],
+  ] & {
+    details: MysteryChineseChess.MoveDetailsStructOutput;
+    signatures: [string, string];
+  };
+
+  export type MatchStruct = {
+    id: BigNumberish;
+    gameMode: BigNumberish;
+    players: [AddressLike, AddressLike];
+    stake: BigNumberish;
+    timeControl: BigNumberish;
+    startTimestamp: BigNumberish;
+    endTimestamp: BigNumberish;
+    matchStatus: BigNumberish;
+    matchResult: MysteryChineseChess.MatchResultStruct;
+    board: MysteryChineseChess.PlayerPieceStruct[][];
+    moves: MysteryChineseChess.MoveStruct[];
+  };
+
+  export type MatchStructOutput = [
+    id: bigint,
+    gameMode: bigint,
+    players: [string, string],
+    stake: bigint,
+    timeControl: bigint,
+    startTimestamp: bigint,
+    endTimestamp: bigint,
+    matchStatus: bigint,
+    matchResult: MysteryChineseChess.MatchResultStructOutput,
+    board: MysteryChineseChess.PlayerPieceStructOutput[][],
+    moves: MysteryChineseChess.MoveStructOutput[],
+  ] & {
+    id: bigint;
+    gameMode: bigint;
+    players: [string, string];
+    stake: bigint;
+    timeControl: bigint;
+    startTimestamp: bigint;
+    endTimestamp: bigint;
+    matchStatus: bigint;
+    matchResult: MysteryChineseChess.MatchResultStructOutput;
+    board: MysteryChineseChess.PlayerPieceStructOutput[][];
+    moves: MysteryChineseChess.MoveStructOutput[];
   };
 
   export type PlayerStruct = {
@@ -50,12 +144,7 @@ export declare namespace MysteryChineseChess {
     tableId: BigNumberish;
   };
 
-  export type PlayerStructOutput = [
-    playerAddress: string,
-    playerName: string,
-    elo: bigint,
-    tableId: bigint,
-  ] & {
+  export type PlayerStructOutput = [playerAddress: string, playerName: string, elo: bigint, tableId: bigint] & {
     playerAddress: string;
     playerName: string;
     elo: bigint;
@@ -92,65 +181,6 @@ export declare namespace MysteryChineseChess {
     timeControl: bigint;
     matchId: bigint;
   };
-
-  export type PlayerPieceStruct = {
-    color: BigNumberish;
-    piece: BigNumberish;
-    unfolded: boolean;
-  };
-
-  export type PlayerPieceStructOutput = [color: bigint, piece: bigint, unfolded: boolean] & {
-    color: bigint;
-    piece: bigint;
-    unfolded: boolean;
-  };
-
-  export type PositionStruct = { row: BigNumberish; column: BigNumberish };
-
-  export type PositionStructOutput = [row: bigint, column: bigint] & {
-    row: bigint;
-    column: bigint;
-  };
-
-  export type MatchStruct = {
-    id: BigNumberish;
-    gameMode: BigNumberish;
-    players: [AddressLike, AddressLike];
-    stake: BigNumberish;
-    timeControl: BigNumberish;
-    startTimestamp: BigNumberish;
-    endTimestamp: BigNumberish;
-    gameStatus: BigNumberish;
-    matchResult: MysteryChineseChess.MatchResultStruct;
-    board: MysteryChineseChess.PlayerPieceStruct[][];
-    steps: [MysteryChineseChess.PositionStruct, MysteryChineseChess.PositionStruct][];
-  };
-
-  export type MatchStructOutput = [
-    id: bigint,
-    gameMode: bigint,
-    players: [string, string],
-    stake: bigint,
-    timeControl: bigint,
-    startTimestamp: bigint,
-    endTimestamp: bigint,
-    gameStatus: bigint,
-    matchResult: MysteryChineseChess.MatchResultStructOutput,
-    board: MysteryChineseChess.PlayerPieceStructOutput[][],
-    steps: [MysteryChineseChess.PositionStructOutput, MysteryChineseChess.PositionStructOutput][],
-  ] & {
-    id: bigint;
-    gameMode: bigint;
-    players: [string, string];
-    stake: bigint;
-    timeControl: bigint;
-    startTimestamp: bigint;
-    endTimestamp: bigint;
-    gameStatus: bigint;
-    matchResult: MysteryChineseChess.MatchResultStructOutput;
-    board: MysteryChineseChess.PlayerPieceStructOutput[][];
-    steps: [MysteryChineseChess.PositionStructOutput, MysteryChineseChess.PositionStructOutput][];
-  };
 }
 
 export interface MysteryChineseChessInterface extends Interface {
@@ -160,6 +190,7 @@ export interface MysteryChineseChessInterface extends Interface {
       | 'MAX_TIME_CONTROL'
       | 'RED'
       | 'createTable'
+      | 'drawVotes'
       | 'exitTable'
       | 'getAllMatches'
       | 'getAllPlayers'
@@ -176,7 +207,6 @@ export interface MysteryChineseChessInterface extends Interface {
       | 'normalModeAdvancedTableIndexes'
       | 'normalModeBeginnerTableIndexes'
       | 'normalModeIntermediateTableIndexes'
-      | 'offerDraw'
       | 'originalPieces'
       | 'owner'
       | 'playerIndexes'
@@ -185,6 +215,7 @@ export interface MysteryChineseChessInterface extends Interface {
       | 'registerPlayer'
       | 'renounceOwnership'
       | 'resign'
+      | 'resignAndExitTable'
       | 'startNewMatch'
       | 'tables'
       | 'transferOwnership'
@@ -195,12 +226,15 @@ export interface MysteryChineseChessInterface extends Interface {
 
   getEvent(
     nameOrSignatureOrTopic:
+      | 'ApprovedDrawOffer'
+      | 'DeclinedDrawOffer'
       | 'ExitedTable'
       | 'JoinedTable'
       | 'MatchEnded'
       | 'NewMatchStarted'
       | 'NewPlayer'
       | 'NewTableCreated'
+      | 'OfferingDraw'
       | 'OwnershipTransferred'
       | 'UpdatedPlayerInfo'
       | 'UpdatedTable'
@@ -210,17 +244,12 @@ export interface MysteryChineseChessInterface extends Interface {
   encodeFunctionData(functionFragment: 'BLACK', values?: undefined): string;
   encodeFunctionData(functionFragment: 'MAX_TIME_CONTROL', values?: undefined): string;
   encodeFunctionData(functionFragment: 'RED', values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: 'createTable',
-    values: [BigNumberish, string, BigNumberish]
-  ): string;
+  encodeFunctionData(functionFragment: 'createTable', values: [BigNumberish, string, BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'drawVotes', values: [BigNumberish, BigNumberish]): string;
   encodeFunctionData(functionFragment: 'exitTable', values: [BigNumberish]): string;
   encodeFunctionData(functionFragment: 'getAllMatches', values?: undefined): string;
   encodeFunctionData(functionFragment: 'getAllPlayers', values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: 'getAllTables',
-    values: [BigNumberish, BigNumberish, BigNumberish]
-  ): string;
+  encodeFunctionData(functionFragment: 'getAllTables', values: [BigNumberish, BigNumberish, BigNumberish]): string;
   encodeFunctionData(functionFragment: 'getMatch', values: [BigNumberish]): string;
   encodeFunctionData(functionFragment: 'getPlayer', values: [AddressLike]): string;
   encodeFunctionData(functionFragment: 'getTable', values: [BigNumberish]): string;
@@ -233,47 +262,39 @@ export interface MysteryChineseChessInterface extends Interface {
     functionFragment: 'move',
     values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: 'normalModeAdvancedTableIndexes',
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: 'normalModeBeginnerTableIndexes',
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: 'normalModeIntermediateTableIndexes',
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(functionFragment: 'offerDraw', values: [BigNumberish]): string;
-  encodeFunctionData(
-    functionFragment: 'originalPieces',
-    values: [BigNumberish, BigNumberish]
-  ): string;
+  encodeFunctionData(functionFragment: 'normalModeAdvancedTableIndexes', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'normalModeBeginnerTableIndexes', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'normalModeIntermediateTableIndexes', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'originalPieces', values: [BigNumberish, BigNumberish]): string;
   encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
   encodeFunctionData(functionFragment: 'playerIndexes', values: [AddressLike]): string;
   encodeFunctionData(functionFragment: 'players', values: [BigNumberish]): string;
   encodeFunctionData(functionFragment: 'rankModeTableIndexes', values: [BigNumberish]): string;
   encodeFunctionData(functionFragment: 'registerPlayer', values: [string]): string;
   encodeFunctionData(functionFragment: 'renounceOwnership', values?: undefined): string;
-  encodeFunctionData(functionFragment: 'resign', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'resign', values: [BigNumberish, MysteryChineseChess.MoveStruct[]]): string;
+  encodeFunctionData(
+    functionFragment: 'resignAndExitTable',
+    values: [BigNumberish, MysteryChineseChess.MoveStruct[]]
+  ): string;
   encodeFunctionData(functionFragment: 'startNewMatch', values: [BigNumberish]): string;
   encodeFunctionData(functionFragment: 'tables', values: [BigNumberish]): string;
   encodeFunctionData(functionFragment: 'transferOwnership', values: [AddressLike]): string;
-  encodeFunctionData(
-    functionFragment: 'updatePlayer',
-    values: [string, BigNumberish, boolean]
-  ): string;
+  encodeFunctionData(functionFragment: 'updatePlayer', values: [string, BigNumberish, boolean]): string;
   encodeFunctionData(
     functionFragment: 'updateTable',
-    values: [MysteryChineseChess.TableStruct]
+    values: [BigNumberish, string, BigNumberish, BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: 'verifyCheckmate', values: [BigNumberish]): string;
+  encodeFunctionData(
+    functionFragment: 'verifyCheckmate',
+    values: [BigNumberish, MysteryChineseChess.MoveStruct[]]
+  ): string;
 
   decodeFunctionResult(functionFragment: 'BLACK', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'MAX_TIME_CONTROL', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'RED', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'createTable', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'drawVotes', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'exitTable', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'getAllMatches', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'getAllPlayers', data: BytesLike): Result;
@@ -289,11 +310,7 @@ export interface MysteryChineseChessInterface extends Interface {
   decodeFunctionResult(functionFragment: 'move', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'normalModeAdvancedTableIndexes', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'normalModeBeginnerTableIndexes', data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: 'normalModeIntermediateTableIndexes',
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: 'offerDraw', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'normalModeIntermediateTableIndexes', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'originalPieces', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'playerIndexes', data: BytesLike): Result;
@@ -302,12 +319,39 @@ export interface MysteryChineseChessInterface extends Interface {
   decodeFunctionResult(functionFragment: 'registerPlayer', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'renounceOwnership', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'resign', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'resignAndExitTable', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'startNewMatch', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'tables', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'transferOwnership', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'updatePlayer', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'updateTable', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'verifyCheckmate', data: BytesLike): Result;
+}
+
+export namespace ApprovedDrawOfferEvent {
+  export type InputTuple = [matchId: BigNumberish, playerAddress: AddressLike];
+  export type OutputTuple = [matchId: bigint, playerAddress: string];
+  export interface OutputObject {
+    matchId: bigint;
+    playerAddress: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace DeclinedDrawOfferEvent {
+  export type InputTuple = [matchId: BigNumberish, playerAddress: AddressLike];
+  export type OutputTuple = [matchId: bigint, playerAddress: string];
+  export interface OutputObject {
+    matchId: bigint;
+    playerAddress: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace ExitedTableEvent {
@@ -337,23 +381,10 @@ export namespace JoinedTableEvent {
 }
 
 export namespace MatchEndedEvent {
-  export type InputTuple = [
-    matchId: BigNumberish,
-    matchResult: MysteryChineseChess.MatchResultStruct,
-    winner: AddressLike,
-    loser: AddressLike,
-  ];
-  export type OutputTuple = [
-    matchId: bigint,
-    matchResult: MysteryChineseChess.MatchResultStructOutput,
-    winner: string,
-    loser: string,
-  ];
+  export type InputTuple = [_match: MysteryChineseChess.MatchStruct];
+  export type OutputTuple = [_match: MysteryChineseChess.MatchStructOutput];
   export interface OutputObject {
-    matchId: bigint;
-    matchResult: MysteryChineseChess.MatchResultStructOutput;
-    winner: string;
-    loser: string;
+    _match: MysteryChineseChess.MatchStructOutput;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -391,6 +422,19 @@ export namespace NewTableCreatedEvent {
   export type OutputTuple = [table: MysteryChineseChess.TableStructOutput];
   export interface OutputObject {
     table: MysteryChineseChess.TableStructOutput;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace OfferingDrawEvent {
+  export type InputTuple = [matchId: BigNumberish, playerAddress: AddressLike];
+  export type OutputTuple = [matchId: bigint, playerAddress: string];
+  export interface OutputObject {
+    matchId: bigint;
+    playerAddress: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -465,27 +509,19 @@ export interface MysteryChineseChess extends BaseContract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  on<TCEvent extends TypedContractEvent>(
-    event: TCEvent,
-    listener: TypedListener<TCEvent>
-  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>;
   on<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
     listener: TypedListener<TCEvent>
   ): Promise<this>;
 
-  once<TCEvent extends TypedContractEvent>(
-    event: TCEvent,
-    listener: TypedListener<TCEvent>
-  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>;
   once<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
     listener: TypedListener<TCEvent>
   ): Promise<this>;
 
-  listeners<TCEvent extends TypedContractEvent>(
-    event: TCEvent
-  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners<TCEvent extends TypedContractEvent>(event: TCEvent): Promise<Array<TypedListener<TCEvent>>>;
   listeners(eventName?: string): Promise<Array<Listener>>;
   removeAllListeners<TCEvent extends TypedContractEvent>(event?: TCEvent): Promise<this>;
 
@@ -495,11 +531,9 @@ export interface MysteryChineseChess extends BaseContract {
 
   RED: TypedContractMethod<[], [bigint], 'view'>;
 
-  createTable: TypedContractMethod<
-    [gameMode: BigNumberish, name: string, stake: BigNumberish],
-    [void],
-    'nonpayable'
-  >;
+  createTable: TypedContractMethod<[gameMode: BigNumberish, name: string, stake: BigNumberish], [void], 'nonpayable'>;
+
+  drawVotes: TypedContractMethod<[arg0: BigNumberish, arg1: BigNumberish], [bigint], 'view'>;
 
   exitTable: TypedContractMethod<[tableId: BigNumberish], [void], 'nonpayable'>;
 
@@ -513,23 +547,11 @@ export interface MysteryChineseChess extends BaseContract {
     'view'
   >;
 
-  getMatch: TypedContractMethod<
-    [id: BigNumberish],
-    [MysteryChineseChess.MatchStructOutput],
-    'view'
-  >;
+  getMatch: TypedContractMethod<[id: BigNumberish], [MysteryChineseChess.MatchStructOutput], 'view'>;
 
-  getPlayer: TypedContractMethod<
-    [_addr: AddressLike],
-    [MysteryChineseChess.PlayerStructOutput],
-    'view'
-  >;
+  getPlayer: TypedContractMethod<[_addr: AddressLike], [MysteryChineseChess.PlayerStructOutput], 'view'>;
 
-  getTable: TypedContractMethod<
-    [id: BigNumberish],
-    [MysteryChineseChess.TableStructOutput],
-    'view'
-  >;
+  getTable: TypedContractMethod<[id: BigNumberish], [MysteryChineseChess.TableStructOutput], 'view'>;
 
   initializeTables: TypedContractMethod<[], [void], 'payable'>;
 
@@ -542,23 +564,14 @@ export interface MysteryChineseChess extends BaseContract {
   matches: TypedContractMethod<
     [arg0: BigNumberish],
     [
-      [
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        MysteryChineseChess.MatchResultStructOutput,
-      ] & {
+      [bigint, bigint, bigint, bigint, bigint, bigint, bigint, MysteryChineseChess.MatchResultStructOutput] & {
         id: bigint;
         gameMode: bigint;
         stake: bigint;
         timeControl: bigint;
         startTimestamp: bigint;
         endTimestamp: bigint;
-        gameStatus: bigint;
+        matchStatus: bigint;
         matchResult: MysteryChineseChess.MatchResultStructOutput;
       },
     ],
@@ -566,12 +579,7 @@ export interface MysteryChineseChess extends BaseContract {
   >;
 
   move: TypedContractMethod<
-    [
-      sourceRow: BigNumberish,
-      sourceCol: BigNumberish,
-      destRow: BigNumberish,
-      destCol: BigNumberish,
-    ],
+    [sourceRow: BigNumberish, sourceCol: BigNumberish, destRow: BigNumberish, destCol: BigNumberish],
     [boolean],
     'payable'
   >;
@@ -581,8 +589,6 @@ export interface MysteryChineseChess extends BaseContract {
   normalModeBeginnerTableIndexes: TypedContractMethod<[arg0: BigNumberish], [bigint], 'view'>;
 
   normalModeIntermediateTableIndexes: TypedContractMethod<[arg0: BigNumberish], [bigint], 'view'>;
-
-  offerDraw: TypedContractMethod<[matchId: BigNumberish], [void], 'payable'>;
 
   originalPieces: TypedContractMethod<[arg0: BigNumberish, arg1: BigNumberish], [bigint], 'view'>;
 
@@ -605,13 +611,19 @@ export interface MysteryChineseChess extends BaseContract {
 
   rankModeTableIndexes: TypedContractMethod<[arg0: BigNumberish], [bigint], 'view'>;
 
-  registerPlayer: TypedContractMethod<[_name: string], [void], 'payable'>;
+  registerPlayer: TypedContractMethod<[_name: string], [void], 'nonpayable'>;
 
   renounceOwnership: TypedContractMethod<[], [void], 'nonpayable'>;
 
-  resign: TypedContractMethod<[matchId: BigNumberish], [void], 'payable'>;
+  resign: TypedContractMethod<[matchId: BigNumberish, moves: MysteryChineseChess.MoveStruct[]], [void], 'payable'>;
 
-  startNewMatch: TypedContractMethod<[tableId: BigNumberish], [void], 'payable'>;
+  resignAndExitTable: TypedContractMethod<
+    [matchId: BigNumberish, moves: MysteryChineseChess.MoveStruct[]],
+    [void],
+    'payable'
+  >;
+
+  startNewMatch: TypedContractMethod<[tableId: BigNumberish], [void], 'nonpayable'>;
 
   tables: TypedContractMethod<
     [arg0: BigNumberish],
@@ -638,12 +650,16 @@ export interface MysteryChineseChess extends BaseContract {
   >;
 
   updateTable: TypedContractMethod<
-    [c_table: MysteryChineseChess.TableStruct],
+    [tableId: BigNumberish, name: string, timeControl: BigNumberish, stake: BigNumberish],
     [void],
     'nonpayable'
   >;
 
-  verifyCheckmate: TypedContractMethod<[matchId: BigNumberish], [void], 'payable'>;
+  verifyCheckmate: TypedContractMethod<
+    [matchId: BigNumberish, moves: MysteryChineseChess.MoveStruct[]],
+    [void],
+    'payable'
+  >;
 
   getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
 
@@ -652,14 +668,11 @@ export interface MysteryChineseChess extends BaseContract {
   getFunction(nameOrSignature: 'RED'): TypedContractMethod<[], [bigint], 'view'>;
   getFunction(
     nameOrSignature: 'createTable'
-  ): TypedContractMethod<
-    [gameMode: BigNumberish, name: string, stake: BigNumberish],
-    [void],
-    'nonpayable'
-  >;
+  ): TypedContractMethod<[gameMode: BigNumberish, name: string, stake: BigNumberish], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: 'exitTable'
-  ): TypedContractMethod<[tableId: BigNumberish], [void], 'nonpayable'>;
+    nameOrSignature: 'drawVotes'
+  ): TypedContractMethod<[arg0: BigNumberish, arg1: BigNumberish], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'exitTable'): TypedContractMethod<[tableId: BigNumberish], [void], 'nonpayable'>;
   getFunction(
     nameOrSignature: 'getAllMatches'
   ): TypedContractMethod<[], [MysteryChineseChess.MatchStructOutput[]], 'view'>;
@@ -683,35 +696,20 @@ export interface MysteryChineseChess extends BaseContract {
     nameOrSignature: 'getTable'
   ): TypedContractMethod<[id: BigNumberish], [MysteryChineseChess.TableStructOutput], 'view'>;
   getFunction(nameOrSignature: 'initializeTables'): TypedContractMethod<[], [void], 'payable'>;
-  getFunction(
-    nameOrSignature: 'isPlayer'
-  ): TypedContractMethod<[_addr: AddressLike], [boolean], 'view'>;
-  getFunction(
-    nameOrSignature: 'joinTable'
-  ): TypedContractMethod<[tableId: BigNumberish], [void], 'nonpayable'>;
-  getFunction(
-    nameOrSignature: 'matchIndexes'
-  ): TypedContractMethod<[arg0: BigNumberish], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'isPlayer'): TypedContractMethod<[_addr: AddressLike], [boolean], 'view'>;
+  getFunction(nameOrSignature: 'joinTable'): TypedContractMethod<[tableId: BigNumberish], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'matchIndexes'): TypedContractMethod<[arg0: BigNumberish], [bigint], 'view'>;
   getFunction(nameOrSignature: 'matches'): TypedContractMethod<
     [arg0: BigNumberish],
     [
-      [
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        MysteryChineseChess.MatchResultStructOutput,
-      ] & {
+      [bigint, bigint, bigint, bigint, bigint, bigint, bigint, MysteryChineseChess.MatchResultStructOutput] & {
         id: bigint;
         gameMode: bigint;
         stake: bigint;
         timeControl: bigint;
         startTimestamp: bigint;
         endTimestamp: bigint;
-        gameStatus: bigint;
+        matchStatus: bigint;
         matchResult: MysteryChineseChess.MatchResultStructOutput;
       },
     ],
@@ -720,12 +718,7 @@ export interface MysteryChineseChess extends BaseContract {
   getFunction(
     nameOrSignature: 'move'
   ): TypedContractMethod<
-    [
-      sourceRow: BigNumberish,
-      sourceCol: BigNumberish,
-      destRow: BigNumberish,
-      destCol: BigNumberish,
-    ],
+    [sourceRow: BigNumberish, sourceCol: BigNumberish, destRow: BigNumberish, destCol: BigNumberish],
     [boolean],
     'payable'
   >;
@@ -739,15 +732,10 @@ export interface MysteryChineseChess extends BaseContract {
     nameOrSignature: 'normalModeIntermediateTableIndexes'
   ): TypedContractMethod<[arg0: BigNumberish], [bigint], 'view'>;
   getFunction(
-    nameOrSignature: 'offerDraw'
-  ): TypedContractMethod<[matchId: BigNumberish], [void], 'payable'>;
-  getFunction(
     nameOrSignature: 'originalPieces'
   ): TypedContractMethod<[arg0: BigNumberish, arg1: BigNumberish], [bigint], 'view'>;
   getFunction(nameOrSignature: 'owner'): TypedContractMethod<[], [string], 'view'>;
-  getFunction(
-    nameOrSignature: 'playerIndexes'
-  ): TypedContractMethod<[arg0: AddressLike], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'playerIndexes'): TypedContractMethod<[arg0: AddressLike], [bigint], 'view'>;
   getFunction(nameOrSignature: 'players'): TypedContractMethod<
     [arg0: BigNumberish],
     [
@@ -760,19 +748,16 @@ export interface MysteryChineseChess extends BaseContract {
     ],
     'view'
   >;
-  getFunction(
-    nameOrSignature: 'rankModeTableIndexes'
-  ): TypedContractMethod<[arg0: BigNumberish], [bigint], 'view'>;
-  getFunction(
-    nameOrSignature: 'registerPlayer'
-  ): TypedContractMethod<[_name: string], [void], 'payable'>;
+  getFunction(nameOrSignature: 'rankModeTableIndexes'): TypedContractMethod<[arg0: BigNumberish], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'registerPlayer'): TypedContractMethod<[_name: string], [void], 'nonpayable'>;
   getFunction(nameOrSignature: 'renounceOwnership'): TypedContractMethod<[], [void], 'nonpayable'>;
   getFunction(
     nameOrSignature: 'resign'
-  ): TypedContractMethod<[matchId: BigNumberish], [void], 'payable'>;
+  ): TypedContractMethod<[matchId: BigNumberish, moves: MysteryChineseChess.MoveStruct[]], [void], 'payable'>;
   getFunction(
-    nameOrSignature: 'startNewMatch'
-  ): TypedContractMethod<[tableId: BigNumberish], [void], 'payable'>;
+    nameOrSignature: 'resignAndExitTable'
+  ): TypedContractMethod<[matchId: BigNumberish, moves: MysteryChineseChess.MoveStruct[]], [void], 'payable'>;
+  getFunction(nameOrSignature: 'startNewMatch'): TypedContractMethod<[tableId: BigNumberish], [void], 'nonpayable'>;
   getFunction(nameOrSignature: 'tables'): TypedContractMethod<
     [arg0: BigNumberish],
     [
@@ -788,44 +773,44 @@ export interface MysteryChineseChess extends BaseContract {
     ],
     'view'
   >;
-  getFunction(
-    nameOrSignature: 'transferOwnership'
-  ): TypedContractMethod<[newOwner: AddressLike], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'transferOwnership'): TypedContractMethod<[newOwner: AddressLike], [void], 'nonpayable'>;
   getFunction(
     nameOrSignature: 'updatePlayer'
+  ): TypedContractMethod<[playerName: string, tableId: BigNumberish, setsTableId: boolean], [void], 'nonpayable'>;
+  getFunction(
+    nameOrSignature: 'updateTable'
   ): TypedContractMethod<
-    [playerName: string, tableId: BigNumberish, setsTableId: boolean],
+    [tableId: BigNumberish, name: string, timeControl: BigNumberish, stake: BigNumberish],
     [void],
     'nonpayable'
   >;
   getFunction(
-    nameOrSignature: 'updateTable'
-  ): TypedContractMethod<[c_table: MysteryChineseChess.TableStruct], [void], 'nonpayable'>;
-  getFunction(
     nameOrSignature: 'verifyCheckmate'
-  ): TypedContractMethod<[matchId: BigNumberish], [void], 'payable'>;
+  ): TypedContractMethod<[matchId: BigNumberish, moves: MysteryChineseChess.MoveStruct[]], [void], 'payable'>;
 
   getEvent(
-    key: 'ExitedTable'
+    key: 'ApprovedDrawOffer'
   ): TypedContractEvent<
-    ExitedTableEvent.InputTuple,
-    ExitedTableEvent.OutputTuple,
-    ExitedTableEvent.OutputObject
+    ApprovedDrawOfferEvent.InputTuple,
+    ApprovedDrawOfferEvent.OutputTuple,
+    ApprovedDrawOfferEvent.OutputObject
   >;
+  getEvent(
+    key: 'DeclinedDrawOffer'
+  ): TypedContractEvent<
+    DeclinedDrawOfferEvent.InputTuple,
+    DeclinedDrawOfferEvent.OutputTuple,
+    DeclinedDrawOfferEvent.OutputObject
+  >;
+  getEvent(
+    key: 'ExitedTable'
+  ): TypedContractEvent<ExitedTableEvent.InputTuple, ExitedTableEvent.OutputTuple, ExitedTableEvent.OutputObject>;
   getEvent(
     key: 'JoinedTable'
-  ): TypedContractEvent<
-    JoinedTableEvent.InputTuple,
-    JoinedTableEvent.OutputTuple,
-    JoinedTableEvent.OutputObject
-  >;
+  ): TypedContractEvent<JoinedTableEvent.InputTuple, JoinedTableEvent.OutputTuple, JoinedTableEvent.OutputObject>;
   getEvent(
     key: 'MatchEnded'
-  ): TypedContractEvent<
-    MatchEndedEvent.InputTuple,
-    MatchEndedEvent.OutputTuple,
-    MatchEndedEvent.OutputObject
-  >;
+  ): TypedContractEvent<MatchEndedEvent.InputTuple, MatchEndedEvent.OutputTuple, MatchEndedEvent.OutputObject>;
   getEvent(
     key: 'NewMatchStarted'
   ): TypedContractEvent<
@@ -835,11 +820,7 @@ export interface MysteryChineseChess extends BaseContract {
   >;
   getEvent(
     key: 'NewPlayer'
-  ): TypedContractEvent<
-    NewPlayerEvent.InputTuple,
-    NewPlayerEvent.OutputTuple,
-    NewPlayerEvent.OutputObject
-  >;
+  ): TypedContractEvent<NewPlayerEvent.InputTuple, NewPlayerEvent.OutputTuple, NewPlayerEvent.OutputObject>;
   getEvent(
     key: 'NewTableCreated'
   ): TypedContractEvent<
@@ -847,6 +828,9 @@ export interface MysteryChineseChess extends BaseContract {
     NewTableCreatedEvent.OutputTuple,
     NewTableCreatedEvent.OutputObject
   >;
+  getEvent(
+    key: 'OfferingDraw'
+  ): TypedContractEvent<OfferingDrawEvent.InputTuple, OfferingDrawEvent.OutputTuple, OfferingDrawEvent.OutputObject>;
   getEvent(
     key: 'OwnershipTransferred'
   ): TypedContractEvent<
@@ -863,11 +847,7 @@ export interface MysteryChineseChess extends BaseContract {
   >;
   getEvent(
     key: 'UpdatedTable'
-  ): TypedContractEvent<
-    UpdatedTableEvent.InputTuple,
-    UpdatedTableEvent.OutputTuple,
-    UpdatedTableEvent.OutputObject
-  >;
+  ): TypedContractEvent<UpdatedTableEvent.InputTuple, UpdatedTableEvent.OutputTuple, UpdatedTableEvent.OutputObject>;
   getEvent(
     key: 'UpdatedTableId'
   ): TypedContractEvent<
@@ -877,6 +857,28 @@ export interface MysteryChineseChess extends BaseContract {
   >;
 
   filters: {
+    'ApprovedDrawOffer(uint256,address)': TypedContractEvent<
+      ApprovedDrawOfferEvent.InputTuple,
+      ApprovedDrawOfferEvent.OutputTuple,
+      ApprovedDrawOfferEvent.OutputObject
+    >;
+    ApprovedDrawOffer: TypedContractEvent<
+      ApprovedDrawOfferEvent.InputTuple,
+      ApprovedDrawOfferEvent.OutputTuple,
+      ApprovedDrawOfferEvent.OutputObject
+    >;
+
+    'DeclinedDrawOffer(uint256,address)': TypedContractEvent<
+      DeclinedDrawOfferEvent.InputTuple,
+      DeclinedDrawOfferEvent.OutputTuple,
+      DeclinedDrawOfferEvent.OutputObject
+    >;
+    DeclinedDrawOffer: TypedContractEvent<
+      DeclinedDrawOfferEvent.InputTuple,
+      DeclinedDrawOfferEvent.OutputTuple,
+      DeclinedDrawOfferEvent.OutputObject
+    >;
+
     'ExitedTable(address,uint256)': TypedContractEvent<
       ExitedTableEvent.InputTuple,
       ExitedTableEvent.OutputTuple,
@@ -899,7 +901,7 @@ export interface MysteryChineseChess extends BaseContract {
       JoinedTableEvent.OutputObject
     >;
 
-    'MatchEnded(uint256,tuple,address,address)': TypedContractEvent<
+    'MatchEnded(tuple)': TypedContractEvent<
       MatchEndedEvent.InputTuple,
       MatchEndedEvent.OutputTuple,
       MatchEndedEvent.OutputObject
@@ -926,11 +928,7 @@ export interface MysteryChineseChess extends BaseContract {
       NewPlayerEvent.OutputTuple,
       NewPlayerEvent.OutputObject
     >;
-    NewPlayer: TypedContractEvent<
-      NewPlayerEvent.InputTuple,
-      NewPlayerEvent.OutputTuple,
-      NewPlayerEvent.OutputObject
-    >;
+    NewPlayer: TypedContractEvent<NewPlayerEvent.InputTuple, NewPlayerEvent.OutputTuple, NewPlayerEvent.OutputObject>;
 
     'NewTableCreated(tuple)': TypedContractEvent<
       NewTableCreatedEvent.InputTuple,
@@ -941,6 +939,17 @@ export interface MysteryChineseChess extends BaseContract {
       NewTableCreatedEvent.InputTuple,
       NewTableCreatedEvent.OutputTuple,
       NewTableCreatedEvent.OutputObject
+    >;
+
+    'OfferingDraw(uint256,address)': TypedContractEvent<
+      OfferingDrawEvent.InputTuple,
+      OfferingDrawEvent.OutputTuple,
+      OfferingDrawEvent.OutputObject
+    >;
+    OfferingDraw: TypedContractEvent<
+      OfferingDrawEvent.InputTuple,
+      OfferingDrawEvent.OutputTuple,
+      OfferingDrawEvent.OutputObject
     >;
 
     'OwnershipTransferred(address,address)': TypedContractEvent<

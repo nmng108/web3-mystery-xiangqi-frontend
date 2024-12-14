@@ -613,6 +613,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@msgpack/msgpack@npm:^2.8.0":
+  version: 2.8.0
+  resolution: "@msgpack/msgpack@npm:2.8.0"
+  checksum: 10/d90ab780c2c96fa5af22f38e0b76871d7c77d06fcf40786b64ada4e0ae02e17b216b38a5505fb4b7d1c339d95caee0669f5ec9004a2b392ce0cbe16afdbd9333
+  languageName: node
+  linkType: hard
+
 "@mui/core-downloads-tracker@npm:^6.1.6":
   version: 6.1.6
   resolution: "@mui/core-downloads-tracker@npm:6.1.6"
@@ -1159,6 +1166,15 @@ __metadata:
   version: 4.0.2
   resolution: "@types/parse-json@npm:4.0.2"
   checksum: 10/5bf62eec37c332ad10059252fc0dab7e7da730764869c980b0714777ad3d065e490627be9f40fc52f238ffa3ac4199b19de4127196910576c2fe34dd47c7a470
+  languageName: node
+  linkType: hard
+
+"@types/peerjs@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@types/peerjs@npm:1.1.0"
+  dependencies:
+    peerjs: "npm:*"
+  checksum: 10/acab3ef004e21035e91a159f4475e2a38bd990f1930344ac0406f29039d7885f9a21928d1d892fe1bd2d04f18d3e623e7743627f1765f1cb2e3fc4fde1c82f52
   languageName: node
   linkType: hard
 
@@ -2551,6 +2567,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eventemitter3@npm:^4.0.7":
+  version: 4.0.7
+  resolution: "eventemitter3@npm:4.0.7"
+  checksum: 10/8030029382404942c01d0037079f1b1bc8fed524b5849c237b80549b01e2fc49709e1d0c557fa65ca4498fc9e24cff1475ef7b855121fcc15f9d61f93e282346
+  languageName: node
+  linkType: hard
+
 "eventemitter3@npm:^5.0.1":
   version: 5.0.1
   resolution: "eventemitter3@npm:5.0.1"
@@ -3752,6 +3775,7 @@ __metadata:
     "@mui/icons-material": "npm:^6.1.6"
     "@mui/material": "npm:^6.1.6"
     "@types/node": "npm:^22.10.1"
+    "@types/peerjs": "npm:^1.1.0"
     "@types/react": "npm:^18.3.3"
     "@types/react-dom": "npm:^18.3.0"
     "@vitejs/plugin-react-swc": "npm:^3.5.0"
@@ -3768,6 +3792,7 @@ __metadata:
     globals: "npm:^15.9.0"
     husky: "npm:^9.1.6"
     lint-staged: "npm:^15.2.10"
+    peerjs: "npm:^1.5.4"
     postcss: "npm:^8.4.47"
     prettier: "npm:3.3.3"
     prettier-plugin-tailwindcss: "npm:^0.6.8"
@@ -4089,6 +4114,25 @@ __metadata:
   version: 4.0.0
   resolution: "path-type@npm:4.0.0"
   checksum: 10/5b1e2daa247062061325b8fdbfd1fb56dde0a448fb1455453276ea18c60685bdad23a445dc148cf87bc216be1573357509b7d4060494a6fd768c7efad833ee45
+  languageName: node
+  linkType: hard
+
+"peerjs-js-binarypack@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "peerjs-js-binarypack@npm:2.1.0"
+  checksum: 10/590e8796ffa1ac35a6a2c0d69cc8ad2173d3a720405fd5159c7801629af65cb70a9cb505fd4320c2cee4a1e485d42497cb26a82479a1300385a82406e8387a5a
+  languageName: node
+  linkType: hard
+
+"peerjs@npm:*, peerjs@npm:^1.5.4":
+  version: 1.5.4
+  resolution: "peerjs@npm:1.5.4"
+  dependencies:
+    "@msgpack/msgpack": "npm:^2.8.0"
+    eventemitter3: "npm:^4.0.7"
+    peerjs-js-binarypack: "npm:^2.1.0"
+    webrtc-adapter: "npm:^9.0.0"
+  checksum: 10/a0c3756e8d05d7ad611107fda0402100f3944b05259a056450668d923a255baa791187dc373b0c92bdbf5e731de17094cd2d8d1b804ad461ca05f97b028340cf
   languageName: node
   linkType: hard
 
@@ -4630,6 +4674,13 @@ __metadata:
   dependencies:
     loose-envify: "npm:^1.1.0"
   checksum: 10/e8d68b89d18d5b028223edf090092846868a765a591944760942b77ea1f69b17235f7e956696efbb62c8130ab90af7e0949bfb8eba7896335507317236966bc9
+  languageName: node
+  linkType: hard
+
+"sdp@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "sdp@npm:3.2.0"
+  checksum: 10/3ea337c24f91f7429c79b97f1a16c19a5abb3b6672ce7c05cc931314af1318cdf3a7a88e66ea1ee71e05bf41bf3a20d5940b1c93f3099e820cec60068ddbd9b4
   languageName: node
   linkType: hard
 
@@ -5317,6 +5368,15 @@ __metadata:
   bin:
     vite: bin/vite.js
   checksum: 10/17fdffa558abaf854f04ead7d3ddd76e4556a59871f9ac63cca3fc20a79979984837d8dddaae4b171e3d73061f781e4eec0f6d3babdbce2b4d111d29cf474c1c
+  languageName: node
+  linkType: hard
+
+"webrtc-adapter@npm:^9.0.0":
+  version: 9.0.1
+  resolution: "webrtc-adapter@npm:9.0.1"
+  dependencies:
+    sdp: "npm:^3.2.0"
+  checksum: 10/5e73ddb6fb807e28fc4bb727bdee2717a697bcf24cfbe1e401c5a3c57d61627fa000b6185470ec3c9fcc1dca42093b67776742c7fde7002fbc14da272a020cbf
   languageName: node
   linkType: hard
 

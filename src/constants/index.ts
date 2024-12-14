@@ -4,7 +4,7 @@ import ICONS from './icons';
 import COLORS from './colors';
 import ROUTES from './routes';
 import LOCAL_STORAGE_KEYS from './localStorageKeys';
-import { Piece } from './enumerations.ts';
+import { Piece } from '../contracts/abi';
 
 export { ROUTES, IMGS, IMAGE_URLS, COLORS, ICONS, LOCAL_STORAGE_KEYS };
 

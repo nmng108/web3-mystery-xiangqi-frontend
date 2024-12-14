@@ -10,9 +10,9 @@ type ToastMessage = {
   message: string;
   level: 'success' | 'info' | 'warning' | 'error';
   duration?: number;
-}
+};
 
-export interface GlobalContextProps {
+interface GlobalContextProps {
   router: typeof AuthNavigator;
   setRouter: React.Dispatch<React.SetStateAction<typeof AuthNavigator>>;
   normalRoomLevel: NormalRoomLevel;
@@ -66,7 +66,5 @@ export const GlobalContextProvider: React.FC<PropsWithChildren> = ({ children })
     setRouter(localUserInfo ? MainNavigator : AuthNavigator);
   }, []);
 
-  return (
-    <GlobalContext.Provider value={contextParams}>{children}</GlobalContext.Provider>
-  );
+  return <GlobalContext.Provider value={contextParams}>{children}</GlobalContext.Provider>;
 };

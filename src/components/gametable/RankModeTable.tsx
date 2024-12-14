@@ -1,9 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useAuthContext, useGlobalContext, useWalletProviderContext } from '../../hooks';
 import {
-  Backdrop,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -14,11 +11,20 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { type AddressLike, type BigNumberish } from 'ethers';
+import {
+  useAuthContext,
+  useGlobalContext,
+  useInTableContext,
+  usePeerContext,
+  useWalletProviderContext,
+} from '../../hooks';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import PlayerTag from './PlayerTag';
 import { MysteryChineseChess } from '../../contracts/typechain-types';
-import { isEqual, isNonZeroAddress, isPositiveBigNumber, isSameAddress } from '../../utilities';
+import { getShortErrorMessage, isEqual, isNonZeroAddress, isPositiveBigNumber, isSameAddress } from '../../utilities';
 import { ContractError } from '../../contracts/abi';
+import PlayerTag from './PlayerTag';
+import { P2PExchangeMessageInterface, P2PMessageType } from '../../p2pExchangeMessage.ts';
 
 type Props = {
   setWaitForTransactionalActionMessage: React.Dispatch<React.SetStateAction<string>>;
@@ -26,53 +32,72 @@ type Props = {
 
 const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }) => {
   const [opensTableSettings, setOpensTableSettings] = useState<boolean>(false);
-  const [exitingTable, setExitingTable] = useState<boolean>(false);
-  const [players, setPlayers] = useState<MysteryChineseChess.PlayerStruct[]>([null, null]);
   const [waitsForCreatingNewMatch, setWaitsForCreatingNewMatch] = useState<boolean>(false);
   const { disconnectWallet } = useWalletProviderContext();
-  const { currentTable, setCurrentTableByTableStruct, setFullscreenToastMessage } =
-    useGlobalContext();
+  const { currentTable, setCurrentTableByTableStruct, setFullscreenToastMessage } = useGlobalContext();
   const { contract, user, setUserByPlayerStruct } = useAuthContext();
+  const { peer, opponentConnection, connectOpponentPeerAddress } = usePeerContext();
+  const { players, isHost, setIsConnectingToPeer, peerConnectionTimedOut, setKeepsConnectionFromStart } =
+    useInTableContext();
 
-  const handleExitTable = useCallback(() => {
+  const handleExitTable = useCallback(async () => {
     if (currentTable && user) {
       try {
-        setExitingTable(true);
-        contract.exitTable(currentTable.id as never);
+        setWaitForTransactionalActionMessage('Exiting...');
+        await contract.exitTable(currentTable.id as never);
       } catch (err) {
-        if ('message' in err) {
-          setFullscreenToastMessage({ message: err.message, level: 'error' });
-          console.log(err.message);
-        }
+        // let message: string = err.toString();
+        // message = getShortErrorMessage(err);
+        // if ('code' in err && 'info' in err && 'error' in err.info && 'message' in err.info.error) {
+        //   message = err.info.error.message;
+        // } else if ('code' in err && 'error' in err && 'message' in err.error) {
+        //   message = err.error.message;
+        //   // console.log('keys: ', Object.keys(err).forEach(k => console.log(k, ' - ', err[k])));
+        // }
+
+        setFullscreenToastMessage({ message: getShortErrorMessage(err), level: 'error' });
+        setWaitForTransactionalActionMessage(undefined);
       }
     }
-  }, [contract, user, currentTable, setCurrentTableByTableStruct, setFullscreenToastMessage]);
+  }, [currentTable, user, setWaitForTransactionalActionMessage, contract, setFullscreenToastMessage]);
 
-  const handleOpenTableSettings = useCallback(() => {
+  const handleOpenCloseTableSettings = useCallback(() => {
     setOpensTableSettings(!opensTableSettings);
   }, [opensTableSettings]);
 
   const onSaveTableSettings = useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
+    async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       type FormJson = { name: string; timeControl: number; stake: number };
-      const formJson: FormJson = Object.fromEntries(
-        new FormData(event.currentTarget).entries()
-      ) as unknown as FormJson;
+      const formJson: FormJson = Object.fromEntries(new FormData(event.currentTarget).entries()) as unknown as FormJson;
       const name: string = formJson.name;
       const timeControl: number = formJson.timeControl;
-      const stake: number = formJson.stake;
+      const stake: number = formJson.stake || Number(currentTable.stake);
       const newTableSettings: MysteryChineseChess.TableStruct = {
         ...currentTable,
         name: name,
         timeControl: timeControl * 60 * 1000,
-        stake: stake || 0,
+        stake: stake || currentTable.stake,
       };
 
       console.log(newTableSettings);
-      contract.updateTable(newTableSettings as never);
+      await contract
+        .updateTable(currentTable.id as never, name as never, (timeControl * 60 * 1000) as never, stake as never)
+        .catch((err) => {
+          setFullscreenToastMessage({ message: getShortErrorMessage(err), level: 'error' });
+          throw err;
+        });
+
+      setWaitForTransactionalActionMessage('Updating table...');
+      handleOpenCloseTableSettings();
     },
-    [contract, currentTable]
+    [
+      contract,
+      currentTable,
+      handleOpenCloseTableSettings,
+      setFullscreenToastMessage,
+      setWaitForTransactionalActionMessage,
+    ]
   );
 
   const handleStartNewMatch = useCallback(async () => {
@@ -80,80 +105,94 @@ const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }
       return;
     }
 
+    if (currentTable.players.filter(isNonZeroAddress).length < 2) {
+      setFullscreenToastMessage({ message: 'Opponent is not found. Cannot start!', level: 'error' });
+      return;
+    }
+
+    if (!opponentConnection || !opponentConnection.open) {
+      setFullscreenToastMessage({ message: 'You are disconnecting to opponent. Cannot start!', level: 'error' });
+      return;
+    }
+
     try {
-      setWaitsForCreatingNewMatch(true);
       // Update states of players, create new match, update state of table
+      setWaitForTransactionalActionMessage('Confirming... (you may get a small fee to verify this transaction)');
       await contract.startNewMatch(currentTable.id as never);
-      contract.on(contract.filters.NewMatchStarted, (matchId, playerIds) => {
-        if (playerIds.find(user.playerAddress.toString)) {
-          contract.off(contract.filters.NewMatchStarted);
-          setCurrentTableByTableStruct({ ...currentTable, matchId: matchId });
-          setWaitsForCreatingNewMatch(false);
-        }
-      });
+      setWaitForTransactionalActionMessage(null);
+      setWaitsForCreatingNewMatch(true);
+      opponentConnection.send({ type: P2PMessageType.START_GAME } as P2PExchangeMessageInterface);
     } catch (err) {
+      const message = err.revert?.name == ContractError.InvalidAction ? err.revert.message : getShortErrorMessage(err);
+
+      setWaitForTransactionalActionMessage(null);
       setWaitsForCreatingNewMatch(false);
-
-      if (err.revert?.name == ContractError.InvalidAction) {
-        disconnectWallet();
-        return;
-      }
-
-      const message =
-        err.revert?.name == ContractError.InvalidAction ? err.revert.message : err.message;
       setFullscreenToastMessage({ message: message, level: 'error', duration: 3000 });
     }
-  }, [contract, currentTable, setCurrentTableByTableStruct]);
+  }, [currentTable, opponentConnection, setFullscreenToastMessage, contract, setWaitForTransactionalActionMessage]);
 
   // Set contract's event listeners relating to table
   useEffect(() => {
-    console.log('create & assign listeners');
-    let handleJoinedTable;
-    let handleUpdatedTable;
-    let handleUpdatedTableId;
-    let handleExitedTable;
+    let handleNewMatchStartedEvent: (matchId: BigNumberish, _playerAddresses: [AddressLike, AddressLike]) => void;
+    let handleJoinedTable: (playerAddress: AddressLike, tableId: BigNumberish) => void;
+    let handleUpdatedTable: (table: MysteryChineseChess.TableStructOutput) => void;
+    let handleUpdatedTableId: (oldTableId: BigNumberish, newTableId: BigNumberish) => void;
+    let handleExitedTable: (playerAddress: AddressLike, tableId: BigNumberish) => void;
 
     if (contract && currentTable) {
-      handleJoinedTable = async (playerAddress, tableId) => {
-        if (
-          isEqual(tableId, currentTable.id) &&
-          !isSameAddress(playerAddress, user.playerAddress)
-        ) {
+      console.log('create table-related listeners');
+      handleNewMatchStartedEvent = (matchId, _playerAddresses) => {
+        if (_playerAddresses.find((addr) => isSameAddress(addr, user.playerAddress))) {
+          contract.off(contract.filters.NewMatchStarted, handleNewMatchStartedEvent);
+          setCurrentTableByTableStruct({ ...currentTable, matchId: matchId });
+          setWaitsForCreatingNewMatch(false);
+          setKeepsConnectionFromStart(true);
+        }
+      };
+      handleJoinedTable = async (playerAddress: AddressLike, tableId: BigNumberish) => {
+        if (isEqual(tableId, currentTable.id) && !isSameAddress(playerAddress, user.playerAddress)) {
           setCurrentTableByTableStruct(await contract.getTable(tableId as never)); // trigger updating `players` list
+          // The player already in a table player should also be the host of that table, so would be the one sending offer
+          connectOpponentPeerAddress(playerAddress);
+          setIsConnectingToPeer(true);
           setFullscreenToastMessage({ message: 'A player has joined', level: 'info' });
         }
       };
-      handleUpdatedTable = (table) => {
+      handleUpdatedTable = (table: MysteryChineseChess.TableStructOutput) => {
         if (isEqual(table.id, currentTable.id)) {
           setCurrentTableByTableStruct(table); // trigger updating `players` list
           setFullscreenToastMessage({ message: 'Updated table settings', level: 'success' });
+          setWaitForTransactionalActionMessage(null);
         }
       };
-      handleUpdatedTableId = (oldTableId, newTableId) => {
+      handleUpdatedTableId = (oldTableId: BigNumberish, newTableId: BigNumberish) => {
         if (isEqual(oldTableId, currentTable.id)) {
           setUserByPlayerStruct({ ...user, tableId: newTableId });
           setCurrentTableByTableStruct({ ...currentTable, id: newTableId });
+          console.log("1 table out there had been removed; your table's ID has been updated");
         }
       };
-      handleExitedTable = async (playerAddress, tableId) => {
-        console.log('caught ExitedTable event');
+      handleExitedTable = async (playerAddress: AddressLike, tableId: BigNumberish) => {
         if (!isEqual(tableId, currentTable.id)) {
           return;
         }
+
         console.log('exec exitttttt');
         if (isSameAddress(playerAddress, user.playerAddress)) {
-          console.log("It's you who has exited");
-          setExitingTable(false);
+          // If this user had just exited a table
+          // console.log("It's you who had exited");
           setUserByPlayerStruct({ ...user, tableId: 0 });
           setCurrentTableByTableStruct(null);
-          setFullscreenToastMessage({ message: 'Exited table', level: 'success' });
+          setWaitForTransactionalActionMessage(undefined);
+          setFullscreenToastMessage({ message: 'Exited table', level: 'info' });
         } else {
           console.log(players);
           const oldOpponent: MysteryChineseChess.PlayerStruct = players.find((player) =>
             isSameAddress(player.playerAddress, playerAddress)
           );
+
           setCurrentTableByTableStruct(await contract.getTable(tableId as never));
-          console.log('should render notif for oppponent left');
+          // console.log('should render notif for oppponent left');
 
           if (oldOpponent) {
             setFullscreenToastMessage({
@@ -162,99 +201,91 @@ const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }
             });
           }
         }
+
+        if (opponentConnection) {
+          connectOpponentPeerAddress(null);
+          console.log('Closing peer connection to old opponent');
+        }
       };
 
+      contract.on(contract.filters.NewMatchStarted, handleNewMatchStartedEvent);
       contract.on(contract.filters.JoinedTable, handleJoinedTable);
       contract.on(contract.filters.UpdatedTable, handleUpdatedTable);
       contract.on(contract.filters.UpdatedTableId, handleUpdatedTableId);
       contract.on(contract.filters.ExitedTable, handleExitedTable);
-      (async () => console.log('4 new event listeners should been set'))();
+      // (async () => console.log('4 new event listeners should be set'))();
     }
 
     return () => {
       if (contract) {
-        // console.log('cleanup listeners');
-        contract.listeners(contract.filters.ExitedTable).then((res) => {
-          console.log(
-            'having ' + res.length + ' listeners for ExitedTable event. removing listeners'
-          );
-          // contract.off(contract.filters.ExitedTable);
-        });
+        // console.log('cleanup table-related listeners');
+        // contract.listeners(contract.filters.ExitedTable).then((res) => {
+        // console.log('having ' + res.length + ' listeners for ExitedTable event. removing listeners');
+        // contract.off(contract.filters.ExitedTable);
+        // });
         contract.off(contract.filters.JoinedTable, handleJoinedTable);
         contract.off(contract.filters.UpdatedTable, handleUpdatedTable);
         contract.off(contract.filters.UpdatedTableId, handleUpdatedTableId);
         contract.off(contract.filters.ExitedTable, handleExitedTable);
       }
     };
-  }, [contract, currentTable, players]);
+  }, [
+    contract,
+    user,
+    currentTable,
+    isHost,
+    opponentConnection,
+    players,
+    connectOpponentPeerAddress,
+    setCurrentTableByTableStruct,
+    setUserByPlayerStruct,
+    setFullscreenToastMessage,
+    setIsConnectingToPeer,
+    setWaitForTransactionalActionMessage,
+    setKeepsConnectionFromStart,
+  ]);
 
-  // Set player information to be rendered
   useEffect(() => {
-    if (currentTable) {
-      (async function () {
-        const players: MysteryChineseChess.PlayerStruct[] = [null, null];
+    const handleGetStartGameMessage = (data: P2PExchangeMessageInterface) => {
+      if (data.type == P2PMessageType.START_GAME) {
+        setWaitsForCreatingNewMatch(true);
+      }
+    };
 
-        for (let i = 0; i < currentTable.players.length; i++) {
-          const address = currentTable.players[i];
+    opponentConnection?.on('data', handleGetStartGameMessage);
 
-          if (!isNonZeroAddress(address)) {
-            continue;
-          }
+    return () => {
+      opponentConnection?.off('data', handleGetStartGameMessage);
+    };
+  }, [opponentConnection]);
 
-          if (isSameAddress(user.playerAddress, address)) {
-            players[i] = user;
-          } else {
-            players[i] = await contract.getPlayer(address as never).catch((err) => {
-              if (err.revert?.name == ContractError.ResourceNotFound) {
-                setFullscreenToastMessage({
-                  message: 'Failed to retrieve opponent information',
-                  level: 'error',
-                });
-              } else {
-                console.error(err);
-              }
-
-              return null;
-            });
-          }
-        }
-
-        setPlayers(players);
-      })();
-    } else {
-      setPlayers([]);
+  useEffect(() => {
+    if (peerConnectionTimedOut && isHost && !isPositiveBigNumber(currentTable.matchId)) {
+      console.log('Auto kick opponent from table due to connection timed out');
+      // TODO: implement this contract's function
     }
-  }, [contract, user, currentTable]);
+  }, [currentTable.matchId, isHost, peerConnectionTimedOut]);
 
-  if (!currentTable) {
+  if (!currentTable || isPositiveBigNumber(currentTable.matchId)) {
     return (
       <div className="flex h-2/3 border-2 border-solid border-black rounded-2xl flex-col text-blue-950">
         <div className="relative w-full h-12 justify-self-start">
-          <IconButton
-            className="block absolute left-0 top-0 w-1/10 my-auto"
-            onClick={handleExitTable}
-          >
+          <IconButton className="block absolute left-0 top-0 w-1/10 my-auto" onClick={handleExitTable}>
             <ArrowBackRoundedIcon />
           </IconButton>
           <Typography variant="h5" className="my-auto">
-            Loading table info...
+            {!currentTable && 'Loading table info...'}
           </Typography>
+          {currentTable && isPositiveBigNumber(currentTable.matchId) && 'Return to game...'}
         </div>
       </div>
     );
   }
 
-  if (currentTable.matchId) {
-    return <div>Return to game...</div>;
-  }
-
   return (
     <div className="flex h-2/3 border-2 border-solid border-black rounded-2xl flex-col text-blue-950">
       <div className="relative w-full h-12 justify-self-start">
-        <IconButton
-          className="block absolute left-0 top-0 w-1/10 my-auto"
-          onClick={handleExitTable}
-        >
+        <IconButton className="block absolute left-0 top-0 w-1/10 my-auto" onClick={handleExitTable}>
           <ArrowBackRoundedIcon />
         </IconButton>
         <Typography variant="h5" className="my-auto">
@@ -273,15 +304,17 @@ const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }
             currentTable &&
             !isPositiveBigNumber(currentTable.matchId) &&
             !waitsForCreatingNewMatch &&
-            isSameAddress(
-              user.playerAddress,
-              currentTable.players[Number(currentTable.hostIndex)]
-            ) && (
+            isSameAddress(user.playerAddress, currentTable.players[Number(currentTable.hostIndex)]) && (
               <div className="flex w-[30rem] flex-col items-center space-y-2">
                 <Button
                   variant="contained"
                   className="w-1/2 text-black text-xl"
                   onClick={handleStartNewMatch}
+                  disabled={
+                    !currentTable ||
+                    currentTable.players.filter(isNonZeroAddress).length < 2 ||
+                    waitsForCreatingNewMatch
+                  }
                 >
                   Start
                 </Button>
@@ -291,7 +324,7 @@ const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }
                       <Button
                         variant="outlined"
                         className="text-black text-balance"
-                        onClick={handleOpenTableSettings}
+                        onClick={handleOpenCloseTableSettings}
                       >
                         Settings
                       </Button>
@@ -304,7 +337,7 @@ const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }
                   </>
                   <Dialog
                     open={opensTableSettings}
-                    onClose={handleOpenTableSettings}
+                    onClose={handleOpenCloseTableSettings}
                     PaperProps={
                       {
                         component: 'form',
@@ -325,6 +358,7 @@ const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }
                         maxRows={1}
                         id="name"
                         name="name"
+                        defaultValue={currentTable?.name ?? ''}
                       />
                       <TextField
                         variant="standard"
@@ -335,6 +369,7 @@ const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }
                         type="number"
                         id="timeControl"
                         name="timeControl"
+                        defaultValue={currentTable ? Number(currentTable.timeControl) / 1000 / 60 : null}
                       />
                       <TextField
                         variant="standard"
@@ -345,31 +380,26 @@ const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }
                         type="number"
                         id="stake"
                         name="stake"
+                        defaultValue={Number(currentTable?.stake)}
                       />
                     </DialogContent>
                     <DialogActions>
-                      <Button onClick={handleOpenTableSettings}>Cancel</Button>
-                      <Button type="submit">Ok</Button>
+                      <Button onClick={handleOpenCloseTableSettings}>Cancel</Button>
+                      <Button type="submit">Save</Button>
                     </DialogActions>
                   </Dialog>
                 </div>
               </div>
             )}
-          {user &&
-            currentTable &&
-            isPositiveBigNumber(currentTable.matchId) &&
-            waitsForCreatingNewMatch && (
-              <div>Be patient, game will be ready in next seconds...</div>
-            )}
+          {user && currentTable /* && isPositiveBigNumber(currentTable.matchId)*/ && waitsForCreatingNewMatch && (
+            <div>Be patient, game will be ready in next seconds...</div>
+          )}
         </div>
         <PlayerTag player={players[1]} isHost={currentTable.hostIndex == 1} />
       </div>
-      <Backdrop
-        sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
-        open={exitingTable}
-      >
-        <CircularProgress color="inherit" /> Exiting
-      </Backdrop>
+      {/*<Backdrop sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })} open={exitingTable}>*/}
+      {/*  <CircularProgress color="inherit" /> Exiting*/}
+      {/*</Backdrop>*/}
     </div>
   );
 };

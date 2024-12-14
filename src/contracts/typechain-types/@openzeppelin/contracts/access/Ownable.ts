@@ -23,9 +23,7 @@ import type {
 } from '../../../common';
 
 export interface OwnableInterface extends Interface {
-  getFunction(
-    nameOrSignature: 'owner' | 'renounceOwnership' | 'transferOwnership'
-  ): FunctionFragment;
+  getFunction(nameOrSignature: 'owner' | 'renounceOwnership' | 'transferOwnership'): FunctionFragment;
 
   getEvent(nameOrSignatureOrTopic: 'OwnershipTransferred'): EventFragment;
 
@@ -68,27 +66,19 @@ export interface Ownable extends BaseContract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  on<TCEvent extends TypedContractEvent>(
-    event: TCEvent,
-    listener: TypedListener<TCEvent>
-  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>;
   on<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
     listener: TypedListener<TCEvent>
   ): Promise<this>;
 
-  once<TCEvent extends TypedContractEvent>(
-    event: TCEvent,
-    listener: TypedListener<TCEvent>
-  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>;
   once<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
     listener: TypedListener<TCEvent>
   ): Promise<this>;
 
-  listeners<TCEvent extends TypedContractEvent>(
-    event: TCEvent
-  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners<TCEvent extends TypedContractEvent>(event: TCEvent): Promise<Array<TypedListener<TCEvent>>>;
   listeners(eventName?: string): Promise<Array<Listener>>;
   removeAllListeners<TCEvent extends TypedContractEvent>(event?: TCEvent): Promise<this>;
 
@@ -102,9 +92,7 @@ export interface Ownable extends BaseContract {
 
   getFunction(nameOrSignature: 'owner'): TypedContractMethod<[], [string], 'view'>;
   getFunction(nameOrSignature: 'renounceOwnership'): TypedContractMethod<[], [void], 'nonpayable'>;
-  getFunction(
-    nameOrSignature: 'transferOwnership'
-  ): TypedContractMethod<[newOwner: AddressLike], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'transferOwnership'): TypedContractMethod<[newOwner: AddressLike], [void], 'nonpayable'>;
 
   getEvent(
     key: 'OwnershipTransferred'

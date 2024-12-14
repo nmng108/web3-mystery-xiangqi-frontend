@@ -34,6 +34,7 @@ const RAW_RUNTIME_STATE =
           ["@mui/icons-material", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:6.1.6"],\
           ["@mui/material", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:6.1.6"],\
           ["@types/node", "npm:22.10.1"],\
+          ["@types/peerjs", "npm:1.1.0"],\
           ["@types/react", "npm:18.3.10"],\
           ["@types/react-dom", "npm:18.3.0"],\
           ["@vitejs/plugin-react-swc", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:3.7.1"],\
@@ -50,6 +51,7 @@ const RAW_RUNTIME_STATE =
           ["globals", "npm:15.9.0"],\
           ["husky", "npm:9.1.6"],\
           ["lint-staged", "npm:15.2.10"],\
+          ["peerjs", "npm:1.5.4"],\
           ["postcss", "npm:8.4.47"],\
           ["prettier", "npm:3.3.3"],\
           ["prettier-plugin-tailwindcss", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:0.6.8"],\
@@ -846,6 +848,15 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["@msgpack/msgpack", [\
+      ["npm:2.8.0", {\
+        "packageLocation": "./.yarn/cache/@msgpack-msgpack-npm-2.8.0-c4768c71d4-d90ab780c2.zip/node_modules/@msgpack/msgpack/",\
+        "packageDependencies": [\
+          ["@msgpack/msgpack", "npm:2.8.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["@mui/core-downloads-tracker", [\
       ["npm:6.1.6", {\
         "packageLocation": "./.yarn/cache/@mui-core-downloads-tracker-npm-6.1.6-5c569fd205-c09af6c988.zip/node_modules/@mui/core-downloads-tracker/",\
@@ -1535,6 +1546,16 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./.yarn/cache/@types-parse-json-npm-4.0.2-f87f65692e-5bf62eec37.zip/node_modules/@types/parse-json/",\
         "packageDependencies": [\
           ["@types/parse-json", "npm:4.0.2"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["@types/peerjs", [\
+      ["npm:1.1.0", {\
+        "packageLocation": "./.yarn/cache/@types-peerjs-npm-1.1.0-2f293868d7-acab3ef004.zip/node_modules/@types/peerjs/",\
+        "packageDependencies": [\
+          ["@types/peerjs", "npm:1.1.0"],\
+          ["peerjs", "npm:1.5.4"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -3257,6 +3278,13 @@ const RAW_RUNTIME_STATE =
       }]\
     ]],\
     ["eventemitter3", [\
+      ["npm:4.0.7", {\
+        "packageLocation": "./.yarn/cache/eventemitter3-npm-4.0.7-7afcdd74ae-8030029382.zip/node_modules/eventemitter3/",\
+        "packageDependencies": [\
+          ["eventemitter3", "npm:4.0.7"]\
+        ],\
+        "linkType": "HARD"\
+      }],\
       ["npm:5.0.1", {\
         "packageLocation": "./.yarn/cache/eventemitter3-npm-5.0.1-5e423b7df3-ac6423ec31.zip/node_modules/eventemitter3/",\
         "packageDependencies": [\
@@ -4611,6 +4639,7 @@ const RAW_RUNTIME_STATE =
           ["@mui/icons-material", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:6.1.6"],\
           ["@mui/material", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:6.1.6"],\
           ["@types/node", "npm:22.10.1"],\
+          ["@types/peerjs", "npm:1.1.0"],\
           ["@types/react", "npm:18.3.10"],\
           ["@types/react-dom", "npm:18.3.0"],\
           ["@vitejs/plugin-react-swc", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:3.7.1"],\
@@ -4627,6 +4656,7 @@ const RAW_RUNTIME_STATE =
           ["globals", "npm:15.9.0"],\
           ["husky", "npm:9.1.6"],\
           ["lint-staged", "npm:15.2.10"],\
+          ["peerjs", "npm:1.5.4"],\
           ["postcss", "npm:8.4.47"],\
           ["prettier", "npm:3.3.3"],\
           ["prettier-plugin-tailwindcss", "virtual:050a8415c9138c79aaade74bf77f2e58790ce97c2e8b30f194cdbac3ce550427918fe086113c43e0d448dda2815d68a8a0930f685cb7599d19192d730dafda39#npm:0.6.8"],\
@@ -4988,6 +5018,28 @@ const RAW_RUNTIME_STATE =
         "packageLocation": "./.yarn/cache/path-type-npm-4.0.0-10d47fc86a-5b1e2daa24.zip/node_modules/path-type/",\
         "packageDependencies": [\
           ["path-type", "npm:4.0.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["peerjs", [\
+      ["npm:1.5.4", {\
+        "packageLocation": "./.yarn/cache/peerjs-npm-1.5.4-b1f39eb912-a0c3756e8d.zip/node_modules/peerjs/",\
+        "packageDependencies": [\
+          ["peerjs", "npm:1.5.4"],\
+          ["@msgpack/msgpack", "npm:2.8.0"],\
+          ["eventemitter3", "npm:4.0.7"],\
+          ["peerjs-js-binarypack", "npm:2.1.0"],\
+          ["webrtc-adapter", "npm:9.0.1"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["peerjs-js-binarypack", [\
+      ["npm:2.1.0", {\
+        "packageLocation": "./.yarn/cache/peerjs-js-binarypack-npm-2.1.0-59ed32add7-590e8796ff.zip/node_modules/peerjs-js-binarypack/",\
+        "packageDependencies": [\
+          ["peerjs-js-binarypack", "npm:2.1.0"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -5656,6 +5708,15 @@ const RAW_RUNTIME_STATE =
         "packageDependencies": [\
           ["scheduler", "npm:0.23.2"],\
           ["loose-envify", "npm:1.4.0"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["sdp", [\
+      ["npm:3.2.0", {\
+        "packageLocation": "./.yarn/cache/sdp-npm-3.2.0-b1a5f85233-3ea337c24f.zip/node_modules/sdp/",\
+        "packageDependencies": [\
+          ["sdp", "npm:3.2.0"]\
         ],\
         "linkType": "HARD"\
       }]\
@@ -6448,6 +6509,16 @@ const RAW_RUNTIME_STATE =
           "stylus",\
           "sugarss",\
           "terser"\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
+    ["webrtc-adapter", [\
+      ["npm:9.0.1", {\
+        "packageLocation": "./.yarn/cache/webrtc-adapter-npm-9.0.1-ae1559caca-5e73ddb6fb.zip/node_modules/webrtc-adapter/",\
+        "packageDependencies": [\
+          ["webrtc-adapter", "npm:9.0.1"],\
+          ["sdp", "npm:3.2.0"]\
         ],\
         "linkType": "HARD"\
       }]\

@@ -1,3 +1,5 @@
 export { AuthContext, AuthContextProvider } from './AuthContext';
-export { GlobalContext, GlobalContextProvider } from './GlobalContext';
-export * from './WalletProvider'
+export * from './GlobalContext';
+export * from './PeerContext';
+export * from './WalletProvider';
+export * from './InTableContext';

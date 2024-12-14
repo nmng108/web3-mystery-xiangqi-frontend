@@ -1,7 +1,8 @@
 import React, { createContext, PropsWithChildren, useCallback, useEffect, useState } from 'react';
 import { BrowserProvider, Contract, JsonRpcApiProvider, JsonRpcSigner } from 'ethers';
 import { useGlobalContext, useWalletProviderContext } from '../hooks';
-import { CONTRACT_ADDRESS, ContractError } from '../contracts/abi';
+import { CONTRACT_ADDRESS } from '../env';
+import { ContractError } from '../contracts/abi';
 import MysteryChineseChessABI from '../contracts/abi/MysteryChineseChess.json';
 import { MysteryChineseChess } from '../contracts/typechain-types';
 import MainNavigator from '../navigations/MainNavigator.tsx';
@@ -10,10 +11,10 @@ import { LOCAL_STORAGE_KEYS } from '../constants';
 import { isSameAddress } from '../utilities';
 
 type ExceptionMessage = {
-  message: string,
-  level: 'success' | 'info' | 'warning' | 'error'
-  duration?: number,
-}
+  message: string;
+  level: 'success' | 'info' | 'warning' | 'error';
+  duration?: number;
+};
 
 interface AuthContextProps {
   provider: JsonRpcApiProvider;
@@ -24,13 +25,11 @@ interface AuthContextProps {
   setSigner: React.Dispatch<React.SetStateAction<JsonRpcSigner>>;
   user: MysteryChineseChess.PlayerStruct;
   setUserByPlayerStruct: (userInfo: MysteryChineseChess.PlayerStruct) => void;
-  authMessage: ExceptionMessage,
+  authMessage: ExceptionMessage;
   setAuthMessage: React.Dispatch<React.SetStateAction<ExceptionMessage>>;
 }
 
-export const AuthContext = createContext<AuthContextProps | undefined>(
-  undefined,
-);
+export const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export const AuthContextProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [provider, setProvider] = useState<JsonRpcApiProvider>(null);
@@ -69,7 +68,7 @@ export const AuthContextProvider: React.FC<PropsWithChildren> = ({ children }) =
   // (2) Set ethers.Signer
   useEffect(() => {
     if (provider && selectedAccount) {
-      (async function() {
+      (async function () {
         setSigner(await provider.getSigner(selectedAccount));
         // console.log('set Signer');
       })();
@@ -91,17 +90,19 @@ export const AuthContextProvider: React.FC<PropsWithChildren> = ({ children }) =
   // (4) Set player information (user)
   useEffect(() => {
     if (contract && selectedAccount) {
-      (async function() {
-        const userInfo: MysteryChineseChess.PlayerStruct = await contract.getPlayer(selectedAccount as never).catch((err) => {
-          console.log(err);
+      (async function () {
+        const userInfo: MysteryChineseChess.PlayerStruct = await contract
+          .getPlayer(selectedAccount as never)
+          .catch((err) => {
+            console.log(err);
 
-          if (err.revert?.name == ContractError.ResourceNotFound) {
-            return null;
-          } else {
-            setAuthMessage({ message: err.message, level: 'error' });
-            throw err;
-          }
-        });
+            if (err.revert?.name == ContractError.ResourceNotFound) {
+              return null;
+            } else {
+              setAuthMessage({ message: err.message, level: 'error' });
+              throw err;
+            }
+          });
 
         if (userInfo) {
           console.log(userInfo);
@@ -114,7 +115,8 @@ export const AuthContextProvider: React.FC<PropsWithChildren> = ({ children }) =
             // localStorage.removeItem(LOCAL_STORAGE_KEYS.USER);
             // console.log('switch acc else 1 if 0');
             disconnectWallet();
-          } else { // If registering new account
+          } else {
+            // If registering new account
             // console.log('switch acc else 1 if 1');
             await contract.on(contract.filters.NewPlayer, (newPlayer) => {
               if (!isSameAddress(newPlayer.playerAddress, selectedAccount)) {
@@ -134,12 +136,16 @@ export const AuthContextProvider: React.FC<PropsWithChildren> = ({ children }) =
     } else {
       const localUserInfoJson: string = localStorage.getItem(LOCAL_STORAGE_KEYS.USER);
       const selectedWalletRdns: string = localStorage.getItem(LOCAL_STORAGE_KEYS.SELECTED_WALLET_RDNS);
-      const localUserInfo: MysteryChineseChess.PlayerStruct = localUserInfoJson ? JSON.parse(localUserInfoJson) as never : null;
+      const localUserInfo: MysteryChineseChess.PlayerStruct = localUserInfoJson
+        ? (JSON.parse(localUserInfoJson) as never)
+        : null;
       // console.log('In Auth context, setUser: ' + (localUserInfo ? 'read user info' : 'not found user info'));
 
       // If had logged in before and comes back
-      if (localUserInfo && selectedWalletRdns && (
-        !selectedAccount || isSameAddress(localUserInfo.playerAddress.toString(), selectedAccount))
+      if (
+        localUserInfo &&
+        selectedWalletRdns &&
+        (!selectedAccount || isSameAddress(localUserInfo.playerAddress.toString(), selectedAccount))
       ) {
         setUserByPlayerStruct(localUserInfo);
         setRouter(MainNavigator);
@@ -164,8 +170,9 @@ export const AuthContextProvider: React.FC<PropsWithChildren> = ({ children }) =
       localStorage.setItem(LOCAL_STORAGE_KEYS.USER, JSON.stringify(storedUserInfo));
     } else {
       const loggingOut = !localStorage.getItem(LOCAL_STORAGE_KEYS.SELECTED_WALLET_RDNS) && !selectedAccount && !user;
-      const loadedInfoButNotSameAccount = selectedAccount && user && (selectedAccount != user.playerAddress.toString().toLowerCase());
-// const loggedInButThenNotFoundAccount = localStorage.getItem(LOCAL_STORAGE_KEYS.USER) && selectedAccount && !user;
+      const loadedInfoButNotSameAccount =
+        selectedAccount && user && selectedAccount != user.playerAddress.toString().toLowerCase();
+      // const loggedInButThenNotFoundAccount = localStorage.getItem(LOCAL_STORAGE_KEYS.USER) && selectedAccount && !user;
       if (loggingOut || loadedInfoButNotSameAccount) {
         localStorage.removeItem(LOCAL_STORAGE_KEYS.USER);
         console.log('remove storage.user');
@@ -186,7 +193,5 @@ export const AuthContextProvider: React.FC<PropsWithChildren> = ({ children }) =
     setAuthMessage,
   };
 
-  return (
-    <AuthContext.Provider value={authParams}>{children}</AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={authParams}>{children}</AuthContext.Provider>;
 };

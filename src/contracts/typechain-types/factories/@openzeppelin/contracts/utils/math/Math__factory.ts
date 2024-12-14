@@ -19,9 +19,7 @@ const _bytecode =
 
 type MathConstructorParams = [signer?: Signer] | ConstructorParameters<typeof ContractFactory>;
 
-const isSuperArgs = (
-  xs: MathConstructorParams
-): xs is ConstructorParameters<typeof ContractFactory> => xs.length > 1;
+const isSuperArgs = (xs: MathConstructorParams): xs is ConstructorParameters<typeof ContractFactory> => xs.length > 1;
 
 export class Math__factory extends ContractFactory {
   constructor(...args: MathConstructorParams) {

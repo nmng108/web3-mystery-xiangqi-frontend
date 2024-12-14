@@ -9,6 +9,7 @@ import RankModeLobby from '../../components/lobby/RankModeLobby.tsx';
 import { useAuthContext } from '../../hooks';
 import { ContractError } from '../../contracts/abi';
 import { isPositiveBigNumber, isSameAddress } from '../../utilities';
+import { InTableContextProvider } from '../../context';
 
 enum GameMode {
   None,
@@ -19,16 +20,10 @@ enum GameMode {
 
 const Home: React.FC = () => {
   const [activeMode, setActiveMode] = useState<GameMode>(GameMode.RANK);
-  const [waitForTransactionalActionMessage, setWaitForTransactionalActionMessage] =
-    useState<string>();
-  const [userAndCurrentTableLoadingMessage, setUserAndCurrentTableLoadingMessage] =
-    useState<string>();
-  const {
-    currentTable,
-    setCurrentTableByTableStruct,
-    fullscreenToastMessage,
-    setFullscreenToastMessage,
-  } = useGlobalContext();
+  const [waitsForTransactionalActionMessage, setWaitsForTransactionalActionMessage] = useState<string>();
+  const [userAndCurrentTableLoadingMessage, setUserAndCurrentTableLoadingMessage] = useState<string>();
+  const { currentTable, setCurrentTableByTableStruct, fullscreenToastMessage, setFullscreenToastMessage } =
+    useGlobalContext();
   // const { selectedAccount } = useWalletProviderContext();
   const { contract, user, setUserByPlayerStruct } = useAuthContext();
 
@@ -56,22 +51,22 @@ const Home: React.FC = () => {
         });
 
         if (!table) {
-          setWaitForTransactionalActionMessage('Exiting from old table');
+          setWaitsForTransactionalActionMessage('Exiting from old table');
 
           await contract.updatePlayer('' as never, 0 as never, true as never);
           contract.on(contract.filters.UpdatedPlayerInfo, (playerAddress) => {
             if (isSameAddress(playerAddress, user.playerAddress)) {
               contract.off(contract.filters.UpdatedPlayerInfo);
-              setWaitForTransactionalActionMessage(undefined);
+              setWaitsForTransactionalActionMessage(undefined);
               console.log('set tableId = 0 successfully via updatePlayer function');
             }
           });
         }
-
+        console.log('found table: ', table);
         setCurrentTableByTableStruct(table);
       })();
     }
-  }, [contract, user, currentTable]);
+  }, [contract, user, currentTable, setCurrentTableByTableStruct, setFullscreenToastMessage, setUserByPlayerStruct]);
 
   // [GUI] Show loading icon & prevent user from interacting with table list
   // while loading user's info and current table's info (if user has accessed a table before).
@@ -85,7 +80,7 @@ const Home: React.FC = () => {
     );
   }, [contract, user, currentTable]);
 
-  const TableSelector: () => React.JSX.Element | null = useCallback(() => {
+  const Lobby: () => React.JSX.Element | null = useCallback(() => {
     switch (activeMode) {
       case GameMode.BOT:
         return <BotModeSelector />;
@@ -95,13 +90,13 @@ const Home: React.FC = () => {
         return (
           <RankModeLobby
             rendersLoadingPage={!userAndCurrentTableLoadingMessage}
-            setWaitForTransactionalActionMessage={setWaitForTransactionalActionMessage}
+            setWaitForTransactionalActionMessage={setWaitsForTransactionalActionMessage}
           />
         );
       default:
         return null;
     }
-  }, [activeMode]);
+  }, [activeMode, userAndCurrentTableLoadingMessage]);
 
   return (
     <PageContainer>
@@ -110,14 +105,12 @@ const Home: React.FC = () => {
         {/* Game Mode Selector */}
         <div className="flex h-8 xl:h-12 2xl:h-16 justify-center items-center">
           {!currentTable && (
-            <ButtonGroup
-              variant="outlined"
-              className="flex w-1/2 min-h-min h-full rounded-2xl items-stretch"
-            >
+            <ButtonGroup variant="outlined" className="flex w-1/2 min-h-min h-full rounded-2xl items-stretch">
               <Button
                 variant={activeMode === GameMode.BOT ? 'contained' : 'outlined'}
                 className={`block flex-1 font-semibold`}
                 onClick={() => setActiveMode(GameMode.BOT)}
+                disabled
               >
                 Bot
               </Button>
@@ -125,6 +118,7 @@ const Home: React.FC = () => {
                 variant={activeMode === GameMode.NORMAL ? 'contained' : 'outlined'}
                 className={`block flex-1 font-semibold`}
                 onClick={() => setActiveMode(GameMode.NORMAL)}
+                disabled
               >
                 Normal
               </Button>
@@ -138,8 +132,10 @@ const Home: React.FC = () => {
             </ButtonGroup>
           )}
         </div>
-
-        {!isPositiveBigNumber(currentTable?.matchId) ? <TableSelector /> : <XiangqiBoard />}
+        <InTableContextProvider>
+          <Lobby />
+          <XiangqiBoard setWaitForTransactionalActionMessage={setWaitsForTransactionalActionMessage} />
+        </InTableContextProvider>
       </div>
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
@@ -152,10 +148,9 @@ const Home: React.FC = () => {
       </Snackbar>
       <Backdrop
         sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
-        open={!!waitForTransactionalActionMessage || !!userAndCurrentTableLoadingMessage}
+        open={!!waitsForTransactionalActionMessage || !!userAndCurrentTableLoadingMessage}
       >
-        <CircularProgress color="inherit" />{' '}
-        {waitForTransactionalActionMessage ?? userAndCurrentTableLoadingMessage}
+        <CircularProgress color="inherit" /> {waitsForTransactionalActionMessage ?? userAndCurrentTableLoadingMessage}
       </Backdrop>
     </PageContainer>
   );

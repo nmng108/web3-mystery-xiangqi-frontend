@@ -1,33 +1,35 @@
 import React, { useState, useEffect } from 'react';
 
 type Props = {
-  initialMilliseconds: number; // Initial cooldown time in minutes
+  timeLeft: number; // Initial cooldown time in milliseconds
+  setTimeLeft: (cb: (prev: number) => number) => void; // Initial cooldown time in minutes
   stopped?: boolean;
-};
+} & React.DetailedHTMLProps<React.HTMLAttributes<HTMLSpanElement>, HTMLSpanElement>;
 
-const CooldownClock: React.FC<
-  Props & React.DetailedHTMLProps<React.HTMLAttributes<HTMLSpanElement>, HTMLSpanElement>
-> = (props) => {
-  const [timeLeft, setTimeLeft] = useState<number>(props.initialMilliseconds / 1000);
-
+const CooldownClock: React.FC<Props> = (props) => {
   useEffect(() => {
-    if (!props.stopped || timeLeft <= 0) return; // Stop countdown if time reaches 0
+    if (props.stopped || props.timeLeft <= 0) return; // Stop countdown if time reaches 0
 
     const interval = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
+      props.setTimeLeft((prev) => prev - 1000);
     }, 1000);
 
     return () => clearInterval(interval); // Cleanup interval on unmount
-  }, [timeLeft, props.stopped]);
+  }, [props.timeLeft, props.stopped, props]);
 
-  return <span {...props}>{timeLeft > 0 ? formatTime(timeLeft) : 'Timeout!'}</span>;
+  const htmlProps = { ...props };
+
+  delete htmlProps.timeLeft;
+  delete htmlProps.stopped;
+
+  return <span {...props}>{props.timeLeft > 0 ? formatTime(props.timeLeft) : 'Timeout!'}</span>;
 };
 
 export default CooldownClock;
 
 const formatTime = (time: number): string => {
-  const minutes = Math.floor(time / 60);
-  const seconds = time % 60;
+  const minutes = Math.floor(time / 1000 / 60);
+  const seconds = Math.round((time / 1000) % 60);
 
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };

@@ -1,32 +1,32 @@
-import { Piece, PieceColor } from '../../constants';
-import { MysteryChineseChess } from '../../contracts/typechain-types';
-
-export interface Position {
-  x: number;
-  y: number;
-}
+import { Piece, PieceColor } from '../../../contracts/abi';
+import { MysteryChineseChess } from '../../../contracts/typechain-types';
+import InvalidMoveError from '../../../exceptions/InvalidMoveError.ts';
 
 export interface XiangqiProcessor {
-  getBoard(): PlayerPiece[][];
+  getBoard(): NullablePlayerPiece[][];
 
   initBoard(): void;
 
   resetBoard(): void;
 
-  move(oldPosition: Position, newPosition: Position): void;
+  getPlayerPiece(position: Position): NullablePlayerPiece;
+
+  move(oldPosition: Position, newPosition: Position): unknown;
 
   getValidMoves(position: Position): Position[];
 
-  hasBlackWon(): boolean;
-
-  hasRedWon(): boolean;
+  hasWon(pieceColor: PieceColor): boolean;
 
   draws(): boolean;
+
+  getHistory(): HistoryRecord[];
+
+  getLatestHistoryRecord(): HistoryRecord;
+
+  revertLastMove(): void;
 }
 
-type NullablePlayerPiece = PlayerPiece | null;
-
-abstract class AbstractXiangqiProcessor implements XiangqiProcessor {
+export abstract class AbstractMysteryXiangqiProcessor implements XiangqiProcessor {
   private static readonly originalAdvisorPositions: Position[] = [
     { y: 0, x: 3 },
     { y: 0, x: 5 },
@@ -70,53 +70,162 @@ abstract class AbstractXiangqiProcessor implements XiangqiProcessor {
     { y: 6, x: 8 },
   ];
 
-  protected readonly _board: NullablePlayerPiece[][];
+  /**
+   * Store a separate original board copied from the board passed into the constructor.<br>
+   * Used to reassign to `this._board` in `resetBoard()`, therefore do not interact directly with this array.
+   * @protected
+   */
+  protected readonly _originalBoard: NullablePlayerPiece[][];
+  protected _board: NullablePlayerPiece[][];
+  protected _history: HistoryRecord[];
+  private _result: CompetetionResult;
 
   protected constructor(board: NullablePlayerPiece[][]) {
     this._board = board;
+    this._history = [];
+    this._result = CompetetionResult.None;
+    this._originalBoard = [];
+
+    board.forEach((row) => this._originalBoard.push(row.map(PlayerPiece.clone)));
   }
 
-  abstract draws(): boolean;
-
-  getBoard(): PlayerPiece[][] {
+  getBoard(): NullablePlayerPiece[][] {
     return this._board;
   }
 
-  abstract initBoard(): void;
+  initBoard(): void {
+    this._board = Array.from({ length: 10 }, (v, idx): NullablePlayerPiece[] => {
+      switch (idx) {
+        case 0:
+          return [
+            new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
+            new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
+            new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
+            new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
+            new PlayerPiece(PieceColor.RED, Piece.General, true),
+            new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
+            new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
+            new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
+            new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
+          ];
+        case 2: {
+          const arr = [null, null, null, null, null, null, null, null];
 
-  abstract resetBoard(): void;
+          arr[1] = new PlayerPiece(PieceColor.RED, Piece.Advisor, false);
+          arr[7] = new PlayerPiece(PieceColor.RED, Piece.Advisor, false);
 
-  abstract hasBlackWon(): boolean;
+          return arr;
+        }
+        case 3:
+          return [
+            new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
+            null,
+            new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
+            null,
+            new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
+            null,
+            new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
+            null,
+            new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
+          ];
+        case 9:
+          return [
+            new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
+            new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
+            new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
+            new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
+            new PlayerPiece(PieceColor.BLACK, Piece.General, true),
+            new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
+            new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
+            new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
+            new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
+          ];
+        case 7:
+          return [
+            null,
+            new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
+            null,
+            null,
+            null,
+            null,
+            null,
+            new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
+            null,
+          ];
+        case 6:
+          return [
+            new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
+            null,
+            new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
+            null,
+            new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
+            null,
+            new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
+            null,
+            new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
+          ];
+      }
 
-  abstract hasRedWon(): boolean;
+      return Array.from({ length: 9 }, () => null);
+    }) as NullablePlayerPiece[][];
+  }
 
-  move(oldPosition: Position, newPosition: Position): void {
-    const playerPiece = this._board[oldPosition.y][oldPosition.x];
+  resetBoard(): void {
+    this._board = [];
+    this._originalBoard.forEach((row) => this._board.push(row.map(PlayerPiece.clone)));
+    this._history = [];
+    this._result = CompetetionResult.None;
+  }
 
-    if (!playerPiece) {
-      throw new Error('Invalid move. Cannot detect selected piece in board');
+  getPlayerPiece(position: Position): NullablePlayerPiece {
+    return this._board[position.y][position.x];
+  }
+
+  move(oldPosition: Position, newPosition: Position): unknown {
+    const oldIntPosition: Position = { y: oldPosition.y, x: oldPosition.x };
+    const newIntPosition: Position = { y: newPosition.y, x: newPosition.x };
+
+    const selectedPlayerPiece = this.getPlayerPiece(oldIntPosition);
+    const targetPlayerPiece = this.getPlayerPiece(newPosition);
+
+    if (!selectedPlayerPiece) {
+      throw new InvalidMoveError('Invalid move. Cannot detect selected piece in board');
     }
 
-    if (oldPosition.x == newPosition.x && oldPosition.y == newPosition.y) {
-      throw new Error('Invalid move. Cannot re-select old position.');
+    if (oldIntPosition.x == newIntPosition.x && oldIntPosition.y == newIntPosition.y) {
+      throw new InvalidMoveError('Invalid move. Cannot re-select old position.');
     }
 
-    const newPositionPlayerPiece = this._board[newPosition.y][newPosition.x];
+    const newPositionPlayerPiece = this._board[newIntPosition.y][newIntPosition.x];
 
-    if (newPositionPlayerPiece && playerPiece.color == newPositionPlayerPiece.color) {
-      throw new Error('Invalid move. New position has our piece');
+    if (newPositionPlayerPiece && selectedPlayerPiece.color == newPositionPlayerPiece.color) {
+      throw new InvalidMoveError('Invalid move. New position has our piece');
     }
 
-    if (!this.isValidMove(oldPosition, newPosition)) {
-      throw new Error('Invalid move');
+    if (!this.isValidMove(oldIntPosition, newIntPosition)) {
+      throw new InvalidMoveError('Invalid move');
     }
 
-    this._board[newPosition.y][newPosition.x] = playerPiece;
-    this._board[oldPosition.y][oldPosition.x] = null;
+    this._history.push({
+      sourcePlayerPiece: this._board[oldIntPosition.y][oldIntPosition.x].clone(),
+      targetPlayerPiece: this._board[newIntPosition.y][newIntPosition.x]?.clone(),
+      oldPosition: oldIntPosition,
+      newPosition: newIntPosition,
+    });
 
-    if (!playerPiece.unfolded) {
-      playerPiece.unfold(true);
+    this._board[newIntPosition.y][newIntPosition.x] = selectedPlayerPiece;
+    this._board[oldIntPosition.y][oldIntPosition.x] = null;
+
+    // Put this code in the same level of the call to this function
+    if (!selectedPlayerPiece.unfolded) {
+      selectedPlayerPiece.unfold();
     }
+    console.log(targetPlayerPiece?.piece == Piece.General);
+    if (targetPlayerPiece?.piece == Piece.General) {
+      this._result = selectedPlayerPiece.color.valueOf();
+    }
+
+    return;
   }
 
   getValidMoves(position: Position): Position[] {
@@ -145,13 +254,13 @@ abstract class AbstractXiangqiProcessor implements XiangqiProcessor {
     const playerPiece = this._board[oldPosition.y][oldPosition.x];
     const piece: Piece = playerPiece.unfolded
       ? playerPiece.piece
-      : AbstractXiangqiProcessor.identifyNonGeneralOriginalPiece(oldPosition);
+      : AbstractMysteryXiangqiProcessor.identifyNonGeneralOriginalPiece(oldPosition);
 
     switch (piece) {
       case Piece.General:
         return this.isValidGeneralMove(oldPosition, newPosition);
       case Piece.Advisor:
-        return this.isValidAdvisorMove(oldPosition, newPosition);
+        return this.isValidAdvisorMove(oldPosition, newPosition, playerPiece.unfolded);
       case Piece.Elephant:
         return this.isValidElephantMove(oldPosition, newPosition);
       case Piece.Horse:
@@ -183,8 +292,7 @@ abstract class AbstractXiangqiProcessor implements XiangqiProcessor {
       const inPalace = (x: number, y: number, color: PieceColor): boolean =>
         x >= 3 &&
         x <= 5 &&
-        ((color === PieceColor.RED && y >= 0 && y <= 2) ||
-          (color === PieceColor.BLACK && y >= 7 && y <= 9));
+        ((color === PieceColor.RED && y >= 0 && y <= 2) || (color === PieceColor.BLACK && y >= 7 && y <= 9));
 
       // Ensure the move stays within the palace
       return (
@@ -196,7 +304,7 @@ abstract class AbstractXiangqiProcessor implements XiangqiProcessor {
     return false;
   }
 
-  private isValidAdvisorMove(oldPosition: Position, newPosition: Position): boolean {
+  private isValidAdvisorMove(oldPosition: Position, newPosition: Position, unfolded: boolean): boolean {
     const playerPiece = this._board[oldPosition.y][oldPosition.x];
     const newPositionPlayerPiece = this._board[newPosition.y][newPosition.x];
 
@@ -208,6 +316,10 @@ abstract class AbstractXiangqiProcessor implements XiangqiProcessor {
 
     // Check if the move is exactly one step diagonally
     if (dx === 1 && dy === 1) {
+      if (!unfolded && (newPosition.x < 3 || newPosition.x > 5)) {
+        return false;
+      }
+
       return newPositionPlayerPiece === null || newPositionPlayerPiece.color !== playerPiece.color;
     }
 
@@ -337,11 +449,7 @@ abstract class AbstractXiangqiProcessor implements XiangqiProcessor {
       }
 
       // Case 2: Capture (must jump exactly one screen)
-      if (
-        newPositionPlayerPiece !== null &&
-        newPositionPlayerPiece.color !== playerPiece.color &&
-        screenCount === 1
-      ) {
+      if (newPositionPlayerPiece !== null && newPositionPlayerPiece.color !== playerPiece.color && screenCount === 1) {
         return true;
       }
     }
@@ -384,24 +492,55 @@ abstract class AbstractXiangqiProcessor implements XiangqiProcessor {
     return false;
   }
 
+  hasWon(pieceColor: PieceColor.RED | PieceColor.BLACK | number): boolean {
+    return pieceColor.valueOf() == this._result.valueOf();
+  }
+
+  draws(): boolean {
+    return this._result == CompetetionResult.Draw;
+  }
+
+  getHistory(): HistoryRecord[] {
+    return this._history;
+  }
+
+  getLatestHistoryRecord(): HistoryRecord {
+    return this._history.length > 0 ? this._history[this._history.length - 1] : null;
+  }
+
+  revertLastMove(): void {
+    if (this._history.length == 0) return;
+
+    const lastHistoryRecord = this._history[this._history.length - 1];
+
+    this._board[lastHistoryRecord.oldPosition.y][lastHistoryRecord.oldPosition.x] = lastHistoryRecord.sourcePlayerPiece;
+    this._board[lastHistoryRecord.newPosition.y][lastHistoryRecord.newPosition.x] = lastHistoryRecord.targetPlayerPiece;
+    this._history.pop();
+  }
+
   protected static identifyNonGeneralOriginalPiece(position: Position): Piece {
     const { x, y } = position;
 
     if (this.originalAdvisorPositions.find((original) => original.x == x && original.y == y)) {
       return Piece.Advisor;
     }
+
     if (this.originalElephantPositions.find((original) => original.x == x && original.y == y)) {
       return Piece.Elephant;
     }
+
     if (this.originalHorsePositions.find((original) => original.x == x && original.y == y)) {
       return Piece.Horse;
     }
+
     if (this.originalChariotPositions.find((original) => original.x == x && original.y == y)) {
       return Piece.Chariot;
     }
+
     if (this.originalCannonPositions.find((original) => original.x == x && original.y == y)) {
       return Piece.Cannon;
     }
+
     if (this.originalSoldierPositions.find((original) => original.x == x && original.y == y)) {
       return Piece.Soldier;
     }
@@ -410,129 +549,18 @@ abstract class AbstractXiangqiProcessor implements XiangqiProcessor {
   }
 }
 
-export class DefaultXiangqiProcessor extends AbstractXiangqiProcessor {
-  private readonly _contract: MysteryChineseChess;
-
-  constructor(contract: MysteryChineseChess, match: MysteryChineseChess.MatchStruct) {
-    // this._board = Array.from(
-    //   { length: 10 }, (v, idx): NullablePlayerPiece[] => {
-    //     switch (idx) {
-    //       case 0:
-    //         return [
-    //           new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
-    //           new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
-    //           new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
-    //           new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
-    //           new PlayerPiece(PieceColor.RED, Piece.General, true),
-    //           new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
-    //           new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
-    //           new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
-    //           new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
-    //         ];
-    //       case 2: {
-    //         const arr = [
-    //           null,
-    //           null,
-    //           null,
-    //           null,
-    //           null,
-    //           null,
-    //           null,
-    //           null,
-    //         ];
-    //
-    //         arr[1] = new PlayerPiece(PieceColor.RED, Piece.Advisor, false);
-    //         arr[7] = new PlayerPiece(PieceColor.RED, Piece.Advisor, false);
-    //
-    //         return arr;
-    //       }
-    //       case 3:
-    //         return [
-    //           new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
-    //           null,
-    //           new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
-    //           null,
-    //           new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
-    //           null,
-    //           new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
-    //           null,
-    //           new PlayerPiece(PieceColor.RED, Piece.Advisor, false),
-    //         ];
-    //       case 9:
-    //         return [
-    //           new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
-    //           new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
-    //           new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
-    //           new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
-    //           new PlayerPiece(PieceColor.BLACK, Piece.General, true),
-    //           new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
-    //           new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
-    //           new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
-    //           new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
-    //         ];
-    //       case 7:
-    //         return [
-    //           null,
-    //           new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
-    //           null,
-    //           null,
-    //           null,
-    //           null,
-    //           null,
-    //           new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
-    //           null,
-    //         ];
-    //       case 6:
-    //         return [
-    //           new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
-    //           null,
-    //           new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
-    //           null,
-    //           new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
-    //           null,
-    //           new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
-    //           null,
-    //           new PlayerPiece(PieceColor.BLACK, Piece.Advisor, false),
-    //         ];
-    //     }
-    //
-    //     return Array.from({ length: 9 }, () => null);
-    //   }
-    // ) as NullablePlayerPiece[][];
-    if (!contract) {
-      throw new Error('Requires non-null contract');
-    }
-
-    if (!match) {
-      throw new Error('Requires non-null match');
-    }
-
-    super(
-      match.board.map<NullablePlayerPiece[]>((row) =>
-        row.map((cell) => (cell.piece != Piece.None ? new PlayerPiece(cell) : null))
-      )
-    );
-    this._contract = contract;
-  }
-
-  draws(): boolean {
-    return false;
-  }
-
-  hasBlackWon(): boolean {
-    return false;
-  }
-
-  hasRedWon(): boolean {
-    return false;
-  }
-
-  initBoard(): void {}
-
-  resetBoard(): void {}
+export interface Position {
+  x: number;
+  y: number;
 }
 
-export class PlayerPiece {
+export interface PlayerPieceInterface {
+  color: PieceColor;
+  piece: Piece;
+  unfolded: boolean;
+}
+
+export class PlayerPiece implements PlayerPieceInterface {
   private readonly _color: PieceColor; // either RED (0) or BLACK (1)
   private readonly _piece: Piece;
   private _unfolded: boolean; // 2 purposes: (1) identify if a piece has moved or not and (2) decide the rule of its next move will comply with the rule of which Piece
@@ -540,11 +568,7 @@ export class PlayerPiece {
   constructor(playerPiece: MysteryChineseChess.PlayerPieceStruct);
   constructor(color: PieceColor, piece: Piece, unfolded: boolean);
 
-  constructor(
-    arg0: PieceColor | MysteryChineseChess.PlayerPieceStruct,
-    piece?: Piece,
-    unfolded?: boolean
-  ) {
+  constructor(arg0: PieceColor | MysteryChineseChess.PlayerPieceStruct, piece?: Piece, unfolded?: boolean) {
     if (Object.keys(arg0).length == 3) {
       const playerPiece = arg0 as MysteryChineseChess.PlayerPieceStruct;
 
@@ -570,10 +594,31 @@ export class PlayerPiece {
     return this._unfolded;
   }
 
-  unfold(value: boolean): void {
-    this._unfolded = true;
+  unfold(unfolded?: boolean): void {
+    this._unfolded = typeof unfolded == 'boolean' ? unfolded : true;
+  }
+
+  clone(): PlayerPiece {
+    return PlayerPiece.clone(this);
+  }
+
+  static clone(playerPiece?: PlayerPiece): NullablePlayerPiece {
+    return playerPiece ? new PlayerPiece(playerPiece.color, playerPiece.piece, playerPiece.unfolded) : null;
   }
 }
 
-export default XiangqiProcessor;
-// export { Processor, DefaultProcessor };
+export type NullablePlayerPiece = PlayerPiece | null;
+
+interface HistoryRecord {
+  sourcePlayerPiece: PlayerPiece;
+  targetPlayerPiece?: PlayerPiece;
+  oldPosition: Position;
+  newPosition: Position;
+}
+
+export enum CompetetionResult {
+  None = -1,
+  RedWon = PieceColor.RED,
+  BlackWon = PieceColor.BLACK,
+  Draw = 2,
+}
