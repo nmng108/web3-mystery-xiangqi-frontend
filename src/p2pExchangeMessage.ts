@@ -3,6 +3,7 @@ import { MysteryChineseChess } from './contracts/typechain-types';
 
 export enum P2PMessageType {
   NONE,
+  EXIT,
   START_GAME,
   PAUSE_GAME,
   SYNC,
@@ -45,7 +46,8 @@ type ExchangeMessageData =
   | MysteryChineseChess.MoveStruct
   | MysteryChineseChess.MoveStruct[]
   | SyncData
-  | MessageAndTimestamp;
+  | MessageAndTimestamp
+  | ChatMessage;
 
 // export interface MoveData {
 //   details: MoveDataDetails;
@@ -76,6 +78,12 @@ export interface SyncData {
 
 export interface MessageAndTimestamp {
   message: string;
+  timestamp: number;
+}
+
+export interface ChatMessage {
+  sender: string;
+  content: string;
   timestamp: number;
 }
 

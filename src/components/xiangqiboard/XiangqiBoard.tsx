@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { IconButton, Typography } from '@mui/material';
+import { Backdrop, Divider, IconButton, Typography } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { useAuthContext, useGlobalContext, useInTableContext, usePeerContext } from '../../hooks';
 import { Position, Web3MysteryXiangqiProcessor } from './processor';
@@ -23,12 +23,14 @@ import { type AddressLike, type BigNumberish } from 'ethers';
 import WalletException from '../../exceptions/WalletException.ts';
 
 type Props = {
-  setWaitForTransactionalActionMessage: React.Dispatch<React.SetStateAction<string>>;
+  processor: Web3MysteryXiangqiProcessor;
+  setProcessor: React.Dispatch<React.SetStateAction<Web3MysteryXiangqiProcessor>>;
+  moves: MysteryChineseChess.MoveStruct[];
+  setMoves: React.Dispatch<React.SetStateAction<MysteryChineseChess.MoveStruct[]>>;
 };
 
-const XiangqiBoard: React.FC<Props> = ({ setWaitForTransactionalActionMessage }) => {
+const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMoves }) => {
   const [match, setMatch] = useState<MysteryChineseChess.MatchStruct>();
-  const [processor, setProcessor] = useState<Web3MysteryXiangqiProcessor>();
   const [userInterfaceMatchState, setUserInterfaceMatchState] = useState<UserInterfaceMatchState>(
     UserInterfaceMatchState.NONE
   );
@@ -36,10 +38,14 @@ const XiangqiBoard: React.FC<Props> = ({ setWaitForTransactionalActionMessage })
   const [selectedPiecePosition, setSelectedPiecePosition] = useState<Position>();
   const [validMoves, setValidMoves] = useState<Position[]>([]);
   const [currentTurn, setCurrentTurn] = useState<number>(0); // allows only 0 or 1
-  const [moves, setMoves] = useState<MysteryChineseChess.MoveStruct[]>([]);
   const [pauseReason, setPauseReason] = useState<string>();
   const { signer, contract, user, setUserByPlayerStruct } = useAuthContext();
-  const { currentTable, setCurrentTableByTableStruct, setFullscreenToastMessage } = useGlobalContext();
+  const {
+    currentTable,
+    setCurrentTableByTableStruct,
+    setFullscreenToastMessage,
+    setWaitsForTransactionalActionMessage,
+  } = useGlobalContext();
   const { peer, opponentConnection, connectOpponentPeerAddress } = usePeerContext();
   const { players, isHost, setIsConnectingToPeer, keepsConnectionFromStart, peerConnectionTimedOut } =
     useInTableContext();
@@ -95,7 +101,7 @@ const XiangqiBoard: React.FC<Props> = ({ setWaitForTransactionalActionMessage })
     }
 
     try {
-      setWaitForTransactionalActionMessage('Exiting...');
+      setWaitsForTransactionalActionMessage('Exiting...');
       await contract.resignAndExitTable(match.id, moves);
       const handleExitedTable = async (playerAddress: AddressLike, tableId: BigNumberish) => {
         if (!isEqual(tableId, currentTable.id)) {
@@ -110,7 +116,7 @@ const XiangqiBoard: React.FC<Props> = ({ setWaitForTransactionalActionMessage })
           // console.log("It's you who had exited");
           setCurrentTableByTableStruct(null);
           setUserByPlayerStruct({ ...user, tableId: 0 });
-          setWaitForTransactionalActionMessage(undefined);
+          setWaitsForTransactionalActionMessage(undefined);
           setFullscreenToastMessage({ message: 'Exited table', level: 'info' });
         } else {
           // TODO: implement listener for both players
@@ -145,7 +151,7 @@ const XiangqiBoard: React.FC<Props> = ({ setWaitForTransactionalActionMessage })
       } as P2PExchangeMessageInterface);
     } catch (err) {
       setFullscreenToastMessage({ message: getShortErrorMessage(err), level: 'error' });
-      setWaitForTransactionalActionMessage(undefined);
+      setWaitsForTransactionalActionMessage(undefined);
       throw err;
     }
   }, [
@@ -158,7 +164,7 @@ const XiangqiBoard: React.FC<Props> = ({ setWaitForTransactionalActionMessage })
     setCurrentTableByTableStruct,
     setFullscreenToastMessage,
     setUserByPlayerStruct,
-    setWaitForTransactionalActionMessage,
+    setWaitsForTransactionalActionMessage,
     user,
   ]);
 
@@ -169,7 +175,7 @@ const XiangqiBoard: React.FC<Props> = ({ setWaitForTransactionalActionMessage })
     }
 
     try {
-      setWaitForTransactionalActionMessage('Resigning...');
+      setWaitsForTransactionalActionMessage('Resigning...');
       await contract.resign(match.id, moves);
 
       opponentConnection.send({
@@ -178,10 +184,10 @@ const XiangqiBoard: React.FC<Props> = ({ setWaitForTransactionalActionMessage })
       } as P2PExchangeMessageInterface);
     } catch (err) {
       setFullscreenToastMessage({ message: getShortErrorMessage(err), level: 'error' });
-      setWaitForTransactionalActionMessage(undefined);
+      setWaitsForTransactionalActionMessage(undefined);
       throw err;
     }
-  }, [contract, match, moves, opponentConnection, setFullscreenToastMessage, setWaitForTransactionalActionMessage]);
+  }, [contract, match, moves, opponentConnection, setFullscreenToastMessage, setWaitsForTransactionalActionMessage]);
 
   const handleClickPiecePosition = useCallback(
     async (position: Position) => {
@@ -644,17 +650,20 @@ const XiangqiBoard: React.FC<Props> = ({ setWaitForTransactionalActionMessage })
   }
 
   return (
-    <div className="flex grow w-full md:w-5/6 lg:w-4/5 xl:w-3/4 2xl:w-[50rem] box-border border-4 border-amber-950 rounded-2xl mx-auto flex-col justify-stretch items-stretch space-y-2">
+    <div className="flex grow w-full md:w-5/6 lg:w-4/5 xl:w-3/4 2xl:w-[50rem] box-border border-solid border-4 border-amber-950 rounded-2xl mx-auto flex-col justify-stretch items-stretch space-y-2">
       <div className="relative w-full h-12 justify-self-start">
-        <IconButton className="block absolute left-0 top-0 w-1/10 my-auto" onClick={handleBackButton}>
+        <IconButton className="block absolute left-0 top-0 w-1/10 h-10 my-auto" onClick={handleBackButton}>
           <ArrowBackRoundedIcon />
         </IconButton>
-        <Typography variant="h5" className="my-auto">
-          {currentTable.name}
-        </Typography>
+        <div className="h-full my-auto text-center">
+          <Typography variant="h5" className="text-center">
+            {currentTable.name}
+          </Typography>
+        </div>
+        <Divider className="top-12 w-full bg-black" />
       </div>
-      <div className="flex grow py-2 flex-col justify-center items-center space-y-4">
-        <div className="flex py-4 justify-center items-center space-x-6">
+      <div className="flex grow flex-col justify-center items-center space-y-2">
+        <div className="flex py-2 justify-center items-center space-x-6">
           <PlayerTag player={players[0]} isHost={currentTable.hostIndex == 0} />
           <CooldownClock
             timeLeft={timeControls[0]}
@@ -662,9 +671,9 @@ const XiangqiBoard: React.FC<Props> = ({ setWaitForTransactionalActionMessage })
             stopped={userInterfaceMatchState != UserInterfaceMatchState.PLAYING || currentTurn != 0}
           />
         </div>
-        <div className="flex grow flex-none w-full bg-gray-300 justify-center items-center">
+        <div className="flex grow flex-none w-full py-4 bg-gray-300 justify-center items-center">
           <div
-            className="w-[40rem] h-[42.015263rem] bg-[url('https://d2g1zxtf4l76di.cloudfront.net/images/boards/Board.svg')] bg-no-repeat relative"
+            className="w-[40rem] h-[42.015263rem] mr-8 bg-[url('https://d2g1zxtf4l76di.cloudfront.net/images/boards/Board.svg')] bg-no-repeat relative"
             style={{ backgroundSize: '80%', backgroundPosition: '75% 35%' }}
           >
             {/*<div className="w-full h-full">*/}
@@ -718,7 +727,7 @@ const XiangqiBoard: React.FC<Props> = ({ setWaitForTransactionalActionMessage })
             {/*</div>*/}
           </div>
         </div>
-        <div className="flex py-4 justify-center items-center space-x-6">
+        <div className="flex py-2 justify-center items-center space-x-6">
           <PlayerTag player={players[1]} isHost={currentTable.hostIndex == 1} />
           <CooldownClock
             timeLeft={timeControls[1]}
@@ -727,6 +736,9 @@ const XiangqiBoard: React.FC<Props> = ({ setWaitForTransactionalActionMessage })
           />
         </div>
       </div>
+      <Backdrop sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })} open={!!pauseReason}>
+        {pauseReason}
+      </Backdrop>
     </div>
   );
 };

@@ -21,15 +21,18 @@ interface GlobalContextProps {
   setCurrentTableByTableStruct: (tableStruct: MysteryChineseChess.TableStruct) => void;
   fullscreenToastMessage: ToastMessage;
   setFullscreenToastMessage: React.Dispatch<React.SetStateAction<ToastMessage>>;
+  waitsForTransactionalActionMessage: string;
+  setWaitsForTransactionalActionMessage: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export const GlobalContext = createContext<GlobalContextProps>(undefined);
 
 export const GlobalContextProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [router, setRouter] = useState<typeof AuthNavigator>(createBrowserRouter([{ path: '', element: <div></div> }]));
+  const [router, setRouter] = useState<typeof AuthNavigator>(MainNavigator);
   const [normalRoomLevel, setNormalRoomLevel] = useState<NormalRoomLevel>();
   const [currentTable, setCurrentTable] = useState<MysteryChineseChess.TableStruct>();
   const [fullscreenToastMessage, setFullscreenToastMessage] = useState<ToastMessage>();
+  const [waitsForTransactionalActionMessage, setWaitsForTransactionalActionMessage] = useState<string>();
 
   const setCurrentTableByTableStruct = useCallback((tableStruct: MysteryChineseChess.TableStruct) => {
     if (tableStruct) {
@@ -57,6 +60,8 @@ export const GlobalContextProvider: React.FC<PropsWithChildren> = ({ children })
     setCurrentTableByTableStruct,
     fullscreenToastMessage,
     setFullscreenToastMessage,
+    waitsForTransactionalActionMessage,
+    setWaitsForTransactionalActionMessage,
   };
 
   useEffect(() => {

@@ -4,16 +4,13 @@ import { MatchSyncMessageInterface, P2PMessageType, SyncData } from '../p2pExcha
 import {
   computeRemainingTimeControls,
   getShortErrorMessage,
-  isBlank,
   isEqual,
-  isReliableMessage,
   isSameAddress,
   isZeroAddress,
   verifyAndMakeAllMoves,
 } from '../utilities';
 import { useAuthContext, useGlobalContext, useInTableContext, usePeerContext } from './index.ts';
 import { MysteryChineseChess } from '../contracts/typechain-types';
-import { verifyMessage } from 'ethers';
 import { Web3MysteryXiangqiProcessor } from '../components/xiangqiboard/processor';
 
 const ALLOWED_TIME_CONTROL_DIFF: number = 2000; // ms
@@ -157,40 +154,11 @@ const useSyncMatchData = ({
   useEffect(() => {
     if (!match) {
       setUserInterfaceMatchState(UserInterfaceMatchState.NONE);
+      setPauseReason('Loading...');
     } else if (!processor || timeControls.includes(null) || !moves) {
       setUserInterfaceMatchState(UserInterfaceMatchState.STARTING);
       setPauseReason('Preparing...');
-    } else if (!opponentConnection || !connectedToOpponent) {
-      setUserInterfaceMatchState(UserInterfaceMatchState.PAUSED_DUE_TO_DISCONNECTION);
-      setPauseReason('Connecting to opponent...');
-      console.log('Peer connection is lost or not yet opened. MatchState = PAUSED_DUE_TO_DISCONNECTION (5)');
-      // console.log(opponentConnection);
-      // } else if (opponentConnection?.open && hasSynchronizedToPeer) {
-    } else {
-      const syncRequiringStates = [
-        UserInterfaceMatchState.STARTING,
-        UserInterfaceMatchState.PAUSED,
-        UserInterfaceMatchState.PAUSED_DUE_TO_DISCONNECTION,
-      ];
-
-      if (!syncRequiringStates.includes(userInterfaceMatchState)) return;
-
-      if (keepsConnectionFromStart && isHost) {
-        console.log('send first msg when starting');
-        let totalTimeControl: number = Number(match.timeControl) - (Date.now() - Number(match.startTimestamp));
-        totalTimeControl = totalTimeControl <= 0 ? 0 : totalTimeControl;
-
-        sendSYNCMessage({
-          packetNum: 0,
-          matchId: String(match.id),
-          timestamp: Date.now(),
-          hadSync: hadSynchronizedBefore,
-          timeControls: [totalTimeControl, totalTimeControl],
-        });
-
-        return;
-      }
-
+    } else if (!hasSynchronizedToPeer) {
       console.log('remain cases. conn status', connectedToOpponent);
       let backsToMatch: boolean = false;
       let hasStoredMoves: boolean = false;
@@ -200,9 +168,6 @@ const useSyncMatchData = ({
       // If just back to game, load & compute match data (if exists, which includes `move` and `timeControls`)
       // from local storage 1 time.
       if (!hasSynchronizedToPeer && !loadedStoredMoves.current) {
-        console.log('Enter SYNC process');
-        setPauseReason('Loading...');
-
         const storedMatchId: string = localStorage.getItem(LOCAL_STORAGE_KEYS.MATCH) as string;
         const storedMoves = JSON.parse(
           localStorage.getItem(LOCAL_STORAGE_KEYS.MOVES)
@@ -231,7 +196,43 @@ const useSyncMatchData = ({
         setCurrentTurn(1 - Number(finalMoveList[finalMoveList.length - 1].details.playerIndex));
       }
 
-      console.log('has sync?', hasSynchronizedToPeer);
+      // If not connected to opponent yet, stop the SYNC process
+      if (!opponentConnection || !connectedToOpponent) {
+        setUserInterfaceMatchState(UserInterfaceMatchState.PAUSED_DUE_TO_DISCONNECTION);
+        setPauseReason('Connecting to opponent...');
+        console.log('Peer connection is lost or not yet opened. MatchState = PAUSED_DUE_TO_DISCONNECTION (5)');
+        // console.log(opponentConnection);
+        // } else if (opponentConnection?.open && hasSynchronizedToPeer) {
+        return;
+      }
+
+      const syncRequiringStates = [
+        UserInterfaceMatchState.STARTING,
+        UserInterfaceMatchState.PAUSED,
+        UserInterfaceMatchState.PAUSED_DUE_TO_DISCONNECTION,
+      ];
+
+      if (!syncRequiringStates.includes(userInterfaceMatchState)) return;
+
+      console.log('Enter SYNC process');
+      setPauseReason('Synchronizing...');
+
+      if (keepsConnectionFromStart && isHost) {
+        console.log('send first msg when starting');
+        let totalTimeControl: number = Number(match.timeControl) - (Date.now() - Number(match.startTimestamp));
+        totalTimeControl = totalTimeControl <= 0 ? 0 : totalTimeControl;
+
+        sendSYNCMessage({
+          packetNum: 0,
+          matchId: String(match.id),
+          timestamp: Date.now(),
+          hadSync: hadSynchronizedBefore,
+          timeControls: [totalTimeControl, totalTimeControl],
+        });
+
+        return;
+      }
+
       if (!hasSynchronizedToPeer && connectedToOpponent && isHost) {
         // console.log('(host) ', {
         //   packetNum: 0,
@@ -431,11 +432,26 @@ const useSyncMatchData = ({
 
           const isSameMoveArray: boolean =
             maxVerifiedMoveLength == masterMoveArray.length && masterMoveArray.length == remainMoveArray.length;
-          // Acceptable difference is less than 2s
+          // Acceptable difference is less than `ALLOWED_TIME_CONTROL_DIFF` milliseconds
           const isSameTimeControls: boolean =
             Math.abs(timeControls[0] - opponentData.timeControls[0]) < ALLOWED_TIME_CONTROL_DIFF &&
             Math.abs(timeControls[1] - opponentData.timeControls[1]) < ALLOWED_TIME_CONTROL_DIFF;
 
+          /*if (isSameMoveArray && maxVerifiedMoveLength == 0) {
+            // If both sides haven't made any moves, only sync time controls
+            const remainingTimeControlOfRed: number = [];
+            await sendSYNCMessage(
+              {
+                packetNum: opponentData.packetNum + 1,
+                matchId: String(match.id),
+                timestamp: Date.now(),
+                hadSync: hadSynchronizedBefore,
+                timeControls: opponentData.timeControls,
+              },
+              true,
+              moves
+            );
+          } else*/
           if (isSameMoveArray && isSameTimeControls) {
             // set up local time controls with smaller values, and they usually belong to opponent's.
             setTimeControls(opponentData.timeControls);

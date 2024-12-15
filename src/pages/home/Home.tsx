@@ -4,12 +4,12 @@ import { Alert, Backdrop, Button, ButtonGroup, CircularProgress, Snackbar } from
 import BotModeSelector from './BotModeSelector.tsx';
 import NormalModeLobby from '../../components/lobby/NormalModeLobby.tsx';
 import useGlobalContext from '../../hooks/useGlobalContext.ts';
-import { XiangqiBoard } from '../../components/xiangqiboard';
 import RankModeLobby from '../../components/lobby/RankModeLobby.tsx';
 import { useAuthContext } from '../../hooks';
 import { ContractError } from '../../contracts/abi';
 import { isPositiveBigNumber, isSameAddress } from '../../utilities';
 import { InTableContextProvider } from '../../context';
+import InGameScreen from '../../components/ingamescreen/InGameScreen.tsx';
 
 enum GameMode {
   None,
@@ -20,10 +20,15 @@ enum GameMode {
 
 const Home: React.FC = () => {
   const [activeMode, setActiveMode] = useState<GameMode>(GameMode.RANK);
-  const [waitsForTransactionalActionMessage, setWaitsForTransactionalActionMessage] = useState<string>();
   const [userAndCurrentTableLoadingMessage, setUserAndCurrentTableLoadingMessage] = useState<string>();
-  const { currentTable, setCurrentTableByTableStruct, fullscreenToastMessage, setFullscreenToastMessage } =
-    useGlobalContext();
+  const {
+    currentTable,
+    setCurrentTableByTableStruct,
+    fullscreenToastMessage,
+    setFullscreenToastMessage,
+    waitsForTransactionalActionMessage,
+    setWaitsForTransactionalActionMessage,
+  } = useGlobalContext();
   // const { selectedAccount } = useWalletProviderContext();
   const { contract, user, setUserByPlayerStruct } = useAuthContext();
 
@@ -87,12 +92,7 @@ const Home: React.FC = () => {
       case GameMode.NORMAL:
         return <NormalModeLobby />;
       case GameMode.RANK:
-        return (
-          <RankModeLobby
-            rendersLoadingPage={!userAndCurrentTableLoadingMessage}
-            setWaitForTransactionalActionMessage={setWaitsForTransactionalActionMessage}
-          />
-        );
+        return <RankModeLobby rendersLoadingPage={!userAndCurrentTableLoadingMessage} />;
       default:
         return null;
     }
@@ -103,38 +103,40 @@ const Home: React.FC = () => {
       <div className="flex h-full flex-col space-y-4">
         <div className="h-16"></div>
         {/* Game Mode Selector */}
-        <div className="flex h-8 xl:h-12 2xl:h-16 justify-center items-center">
-          {!currentTable && (
-            <ButtonGroup variant="outlined" className="flex w-1/2 min-h-min h-full rounded-2xl items-stretch">
-              <Button
-                variant={activeMode === GameMode.BOT ? 'contained' : 'outlined'}
-                className={`block flex-1 font-semibold`}
-                onClick={() => setActiveMode(GameMode.BOT)}
-                disabled
-              >
-                Bot
-              </Button>
-              <Button
-                variant={activeMode === GameMode.NORMAL ? 'contained' : 'outlined'}
-                className={`block flex-1 font-semibold`}
-                onClick={() => setActiveMode(GameMode.NORMAL)}
-                disabled
-              >
-                Normal
-              </Button>
-              <Button
-                variant={activeMode === GameMode.RANK ? 'contained' : 'outlined'}
-                className={`block flex-1 font-semibold`}
-                onClick={() => setActiveMode(GameMode.RANK)}
-              >
-                Rank
-              </Button>
-            </ButtonGroup>
-          )}
-        </div>
+        {!isPositiveBigNumber(currentTable?.matchId) && (
+          <div className="flex h-8 xl:h-12 2xl:h-16 justify-center items-center">
+            {!currentTable && (
+              <ButtonGroup variant="outlined" className="flex w-1/2 min-h-min h-full rounded-2xl items-stretch">
+                <Button
+                  variant={activeMode === GameMode.BOT ? 'contained' : 'outlined'}
+                  className={`block flex-1 font-semibold`}
+                  onClick={() => setActiveMode(GameMode.BOT)}
+                  disabled
+                >
+                  Bot
+                </Button>
+                <Button
+                  variant={activeMode === GameMode.NORMAL ? 'contained' : 'outlined'}
+                  className={`block flex-1 font-semibold`}
+                  onClick={() => setActiveMode(GameMode.NORMAL)}
+                  disabled
+                >
+                  Normal
+                </Button>
+                <Button
+                  variant={activeMode === GameMode.RANK ? 'contained' : 'outlined'}
+                  className={`block flex-1 font-semibold`}
+                  onClick={() => setActiveMode(GameMode.RANK)}
+                >
+                  Rank
+                </Button>
+              </ButtonGroup>
+            )}
+          </div>
+        )}
         <InTableContextProvider>
           <Lobby />
-          <XiangqiBoard setWaitForTransactionalActionMessage={setWaitsForTransactionalActionMessage} />
+          <InGameScreen />
         </InTableContextProvider>
       </div>
       <Snackbar

@@ -36,25 +36,28 @@ const columns: readonly Column[] = [
 
 type Props = {
   rendersLoadingPage: boolean;
-  setWaitForTransactionalActionMessage: React.Dispatch<React.SetStateAction<string>>;
 };
 
 /**
  * Should only be rendered if user is currently not in any table.
  * @param rendersLoadingPage
- * @param setWaitForTransactionalActionMessage
  */
-const RankModeLobby: React.FC<Props> = ({ rendersLoadingPage, setWaitForTransactionalActionMessage }) => {
+const RankModeLobby: React.FC<Props> = ({ rendersLoadingPage }) => {
   const [gameTableList, setGameTableList] = useState<Array<InLobbyTableData>>([]);
   const [loadingTableList, setLoadingTableList] = useState<boolean>(false);
-  const { currentTable, setCurrentTableByTableStruct, setFullscreenToastMessage } = useGlobalContext();
+  const {
+    currentTable,
+    setCurrentTableByTableStruct,
+    setFullscreenToastMessage,
+    setWaitsForTransactionalActionMessage,
+  } = useGlobalContext();
   const { contract, user, setUserByPlayerStruct } = useAuthContext();
 
   /**
    * Handle `onClick` event of the "Create table" button.
    */
   const handleCreateTable = useCallback(async () => {
-    setWaitForTransactionalActionMessage('Creating table...');
+    setWaitsForTransactionalActionMessage('Creating table...');
 
     try {
       await contract.createTable(5 as never, `${user.playerName}'s table` as never, 50 as never);
@@ -67,7 +70,7 @@ const RankModeLobby: React.FC<Props> = ({ rendersLoadingPage, setWaitForTransact
         setUserByPlayerStruct({ ...user, tableId: newTable.id });
         setCurrentTableByTableStruct(newTable);
         setFullscreenToastMessage({ message: 'Created table', level: 'success' });
-        setWaitForTransactionalActionMessage(undefined);
+        setWaitsForTransactionalActionMessage(undefined);
       });
     } catch (err) {
       console.log(err);
@@ -82,10 +85,10 @@ const RankModeLobby: React.FC<Props> = ({ rendersLoadingPage, setWaitForTransact
         setFullscreenToastMessage({ message: err.message, level: 'error' });
       }
 
-      setWaitForTransactionalActionMessage(undefined);
+      setWaitsForTransactionalActionMessage(undefined);
     }
   }, [
-    setWaitForTransactionalActionMessage,
+    setWaitsForTransactionalActionMessage,
     contract,
     setCurrentTableByTableStruct,
     setUserByPlayerStruct,
@@ -116,14 +119,14 @@ const RankModeLobby: React.FC<Props> = ({ rendersLoadingPage, setWaitForTransact
       }
 
       if (!currentTable) {
-        setWaitForTransactionalActionMessage('Entering table...');
+        setWaitsForTransactionalActionMessage('Entering table...');
         try {
           await contract.joinTable(gameTable.id as never);
           await contract.on(contract.filters.JoinedTable, (playerAddress, _tableId) => {
             if (playerAddress == user.playerAddress && _tableId == gameTable.id) {
               contract.off(contract.filters.JoinedTable);
               setUserByPlayerStruct({ ...user, tableId: _tableId });
-              setWaitForTransactionalActionMessage(undefined);
+              setWaitsForTransactionalActionMessage(undefined);
               // console.log('Joined table %d', _tableId);
             }
           });
@@ -131,7 +134,7 @@ const RankModeLobby: React.FC<Props> = ({ rendersLoadingPage, setWaitForTransact
           const message: string = getShortErrorMessage(err);
 
           setFullscreenToastMessage({ message: message, level: 'error' });
-          setWaitForTransactionalActionMessage(undefined);
+          setWaitsForTransactionalActionMessage(undefined);
         }
       } else {
         setFullscreenToastMessage({
@@ -146,7 +149,7 @@ const RankModeLobby: React.FC<Props> = ({ rendersLoadingPage, setWaitForTransact
       contract,
       user,
       setUserByPlayerStruct,
-      setWaitForTransactionalActionMessage,
+      setWaitsForTransactionalActionMessage,
     ]
   );
 
@@ -193,11 +196,15 @@ const RankModeLobby: React.FC<Props> = ({ rendersLoadingPage, setWaitForTransact
     }
   }, [loadingTableList, contract, loadTableList]);
 
+  if (isPositiveBigNumber(currentTable?.matchId)) {
+    return null;
+  }
+
   return (
     <>
       {/* Search */}
-      <div className="flex h-8 xl:h-12 2xl:h-16 justify-center items-center">
-        {!currentTable && (
+      {!currentTable && (
+        <div className="flex h-8 xl:h-12 2xl:h-16 justify-center items-center">
           <div className="flex space-x-20">
             <Button variant="contained" color="info" className={`bg-white px-4 py-2 rounded`} disabled>
               Join randomly
@@ -211,12 +218,12 @@ const RankModeLobby: React.FC<Props> = ({ rendersLoadingPage, setWaitForTransact
               Create table
             </Button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
       {/* Room Options */}
-      <div className="flex grow w-full md:w-5/6 lg:w-4/5 xl:w-3/4 2xl:w-[50rem] box-border border-4 border-amber-950 rounded-2xl mx-auto flex-col justify-stretch items-stretch space-y-2">
-        <div className="flex h-8 justify-between">
-          {!currentTable && (
+      {!currentTable && (
+        <div className="flex grow w-full md:w-5/6 lg:w-4/5 xl:w-3/4 2xl:w-[50rem] box-border border-4 border-amber-950 rounded-2xl mx-auto flex-col justify-stretch items-stretch space-y-2">
+          <div className="flex h-8 justify-between">
             <>
               <Button variant="contained" color="info" className="w-1/3 px-2 py-1" onClick={handleReloadList}>
                 Reload
@@ -233,10 +240,9 @@ const RankModeLobby: React.FC<Props> = ({ rendersLoadingPage, setWaitForTransact
                 </Button>
               </div>
             </>
-          )}
-        </div>
+          </div>
 
-        {!currentTable && (
+          {/*{!currentTable && (*/}
           <div
             className={`flex min-h-40 h-4/5 2xl:h-3/4 border-2 border-solid border-black rounded-lg flex-col text-blue-950`}
           >
@@ -308,14 +314,15 @@ const RankModeLobby: React.FC<Props> = ({ rendersLoadingPage, setWaitForTransact
               <CircularProgress color="inherit" /> Loading table list...
             </Backdrop>
           </div>
-        )}
+          {/*)}*/}
 
-        {
-          /*Render table if not entered game yet*/ currentTable && !isPositiveBigNumber(currentTable.matchId) && (
-            <RankModeTable setWaitForTransactionalActionMessage={setWaitForTransactionalActionMessage} />
-          )
-        }
-      </div>
+          {
+            /*Render table if not entered game yet*/ currentTable && !isPositiveBigNumber(currentTable.matchId) && (
+              <RankModeTable />
+            )
+          }
+        </div>
+      )}
     </>
   );
 };

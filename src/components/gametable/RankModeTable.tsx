@@ -26,15 +26,16 @@ import { ContractError } from '../../contracts/abi';
 import PlayerTag from './PlayerTag';
 import { P2PExchangeMessageInterface, P2PMessageType } from '../../p2pExchangeMessage.ts';
 
-type Props = {
-  setWaitForTransactionalActionMessage: React.Dispatch<React.SetStateAction<string>>;
-};
-
-const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }) => {
+const RankModeTable: React.FC = () => {
   const [opensTableSettings, setOpensTableSettings] = useState<boolean>(false);
   const [waitsForCreatingNewMatch, setWaitsForCreatingNewMatch] = useState<boolean>(false);
   const { disconnectWallet } = useWalletProviderContext();
-  const { currentTable, setCurrentTableByTableStruct, setFullscreenToastMessage } = useGlobalContext();
+  const {
+    currentTable,
+    setCurrentTableByTableStruct,
+    setFullscreenToastMessage,
+    setWaitsForTransactionalActionMessage,
+  } = useGlobalContext();
   const { contract, user, setUserByPlayerStruct } = useAuthContext();
   const { peer, opponentConnection, connectOpponentPeerAddress } = usePeerContext();
   const { players, isHost, setIsConnectingToPeer, peerConnectionTimedOut, setKeepsConnectionFromStart } =
@@ -43,7 +44,7 @@ const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }
   const handleExitTable = useCallback(async () => {
     if (currentTable && user) {
       try {
-        setWaitForTransactionalActionMessage('Exiting...');
+        setWaitsForTransactionalActionMessage('Exiting...');
         await contract.exitTable(currentTable.id as never);
       } catch (err) {
         // let message: string = err.toString();
@@ -56,10 +57,10 @@ const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }
         // }
 
         setFullscreenToastMessage({ message: getShortErrorMessage(err), level: 'error' });
-        setWaitForTransactionalActionMessage(undefined);
+        setWaitsForTransactionalActionMessage(undefined);
       }
     }
-  }, [currentTable, user, setWaitForTransactionalActionMessage, contract, setFullscreenToastMessage]);
+  }, [currentTable, user, setWaitsForTransactionalActionMessage, contract, setFullscreenToastMessage]);
 
   const handleOpenCloseTableSettings = useCallback(() => {
     setOpensTableSettings(!opensTableSettings);
@@ -88,7 +89,7 @@ const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }
           throw err;
         });
 
-      setWaitForTransactionalActionMessage('Updating table...');
+      setWaitsForTransactionalActionMessage('Updating table...');
       handleOpenCloseTableSettings();
     },
     [
@@ -96,7 +97,7 @@ const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }
       currentTable,
       handleOpenCloseTableSettings,
       setFullscreenToastMessage,
-      setWaitForTransactionalActionMessage,
+      setWaitsForTransactionalActionMessage,
     ]
   );
 
@@ -117,19 +118,19 @@ const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }
 
     try {
       // Update states of players, create new match, update state of table
-      setWaitForTransactionalActionMessage('Confirming... (you may get a small fee to verify this transaction)');
+      setWaitsForTransactionalActionMessage('Confirming... (you may get a small fee to verify this transaction)');
       await contract.startNewMatch(currentTable.id as never);
-      setWaitForTransactionalActionMessage(null);
+      setWaitsForTransactionalActionMessage(null);
       setWaitsForCreatingNewMatch(true);
       opponentConnection.send({ type: P2PMessageType.START_GAME } as P2PExchangeMessageInterface);
     } catch (err) {
       const message = err.revert?.name == ContractError.InvalidAction ? err.revert.message : getShortErrorMessage(err);
 
-      setWaitForTransactionalActionMessage(null);
+      setWaitsForTransactionalActionMessage(null);
       setWaitsForCreatingNewMatch(false);
       setFullscreenToastMessage({ message: message, level: 'error', duration: 3000 });
     }
-  }, [currentTable, opponentConnection, setFullscreenToastMessage, contract, setWaitForTransactionalActionMessage]);
+  }, [currentTable, opponentConnection, setFullscreenToastMessage, contract, setWaitsForTransactionalActionMessage]);
 
   // Set contract's event listeners relating to table
   useEffect(() => {
@@ -162,7 +163,7 @@ const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }
         if (isEqual(table.id, currentTable.id)) {
           setCurrentTableByTableStruct(table); // trigger updating `players` list
           setFullscreenToastMessage({ message: 'Updated table settings', level: 'success' });
-          setWaitForTransactionalActionMessage(null);
+          setWaitsForTransactionalActionMessage(null);
         }
       };
       handleUpdatedTableId = (oldTableId: BigNumberish, newTableId: BigNumberish) => {
@@ -183,7 +184,7 @@ const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }
           // console.log("It's you who had exited");
           setUserByPlayerStruct({ ...user, tableId: 0 });
           setCurrentTableByTableStruct(null);
-          setWaitForTransactionalActionMessage(undefined);
+          setWaitsForTransactionalActionMessage(undefined);
           setFullscreenToastMessage({ message: 'Exited table', level: 'info' });
         } else {
           console.log(players);
@@ -241,7 +242,7 @@ const RankModeTable: React.FC<Props> = ({ setWaitForTransactionalActionMessage }
     setUserByPlayerStruct,
     setFullscreenToastMessage,
     setIsConnectingToPeer,
-    setWaitForTransactionalActionMessage,
+    setWaitsForTransactionalActionMessage,
     setKeepsConnectionFromStart,
   ]);
 
