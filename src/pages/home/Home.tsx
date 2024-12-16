@@ -1,15 +1,12 @@
-import { PageContainer } from '../../components';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Backdrop, Button, ButtonGroup, CircularProgress, Snackbar } from '@mui/material';
 import BotModeSelector from './BotModeSelector.tsx';
-import NormalModeLobby from '../../components/lobby/NormalModeLobby.tsx';
+import { InGameScreen, NormalModeLobby, PageContainer, RankModeLobby } from '../../components';
 import useGlobalContext from '../../hooks/useGlobalContext.ts';
-import RankModeLobby from '../../components/lobby/RankModeLobby.tsx';
 import { useAuthContext } from '../../hooks';
 import { ContractError } from '../../contracts/abi';
 import { isPositiveBigNumber, isSameAddress } from '../../utilities';
 import { InTableContextProvider } from '../../context';
-import InGameScreen from '../../components/ingamescreen/InGameScreen.tsx';
 
 enum GameMode {
   None,
@@ -71,7 +68,15 @@ const Home: React.FC = () => {
         setCurrentTableByTableStruct(table);
       })();
     }
-  }, [contract, user, currentTable, setCurrentTableByTableStruct, setFullscreenToastMessage, setUserByPlayerStruct]);
+  }, [
+    contract,
+    user,
+    currentTable,
+    setCurrentTableByTableStruct,
+    setFullscreenToastMessage,
+    setUserByPlayerStruct,
+    setWaitsForTransactionalActionMessage,
+  ]);
 
   // [GUI] Show loading icon & prevent user from interacting with table list
   // while loading user's info and current table's info (if user has accessed a table before).

@@ -43,8 +43,9 @@ const Leaderboard: React.FC = () => {
             const firstElo: number = Number(a.elo);
             const secondElo: number = Number(b.elo);
 
-            return firstElo < secondElo ? -1 : firstElo > secondElo ? 1 : 0;
+            return firstElo < secondElo ? 1 : firstElo > secondElo ? -1 : 0;
           })
+          .slice(0, 20) // get top 20 players
           .filter((player) => isNonZeroAddress(player.playerAddress));
         console.log(list);
         setRankingList(list);
@@ -57,7 +58,7 @@ const Leaderboard: React.FC = () => {
       <div className="h-20"></div>
       <Box
         sx={{ width: '100%', maxWidth: 966, margin: 'auto', padding: 2 }}
-        className="flex flex-col items-center space-x-8"
+        className="flex flex-col items-center space-y-4"
       >
         <Box width={500} className="h-40">
           <Typography
@@ -81,7 +82,7 @@ const Leaderboard: React.FC = () => {
           </Typography>
         </Box>
         <Typography
-          variant="h2"
+          variant="h3"
           sx={{
             // position: "fixed",
             // top: 0,

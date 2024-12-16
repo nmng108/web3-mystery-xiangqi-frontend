@@ -21,14 +21,14 @@ const InGameScreen: React.FC = () => {
   const { opponentConnection } = usePeerContext();
   const { players, connectedToOpponent } = useInTableContext();
 
-  const convertPlayerIndexToName = useCallback(
-    (index: number): string | undefined => {
-      if (!players || players.length != 2) return;
-
-      return players[index]?.playerName;
-    },
-    [players]
-  );
+  // const convertPlayerIndexToName = useCallback(
+  //   (index: number): string | undefined => {
+  //     if (!players || players.length != 2) return;
+  //
+  //     return players[index]?.playerName;
+  //   },
+  //   [players]
+  // );
 
   const handleSendMessage = useCallback(() => {
     if (isBlank(insertedMessage)) {
@@ -75,14 +75,14 @@ const InGameScreen: React.FC = () => {
 
   return (
     <div className="flex w-full">
-      <div className="w-2/3 h-full">
+      <div className="w-2/3 min-w-[670px] h-full">
         <XiangqiBoard processor={processor} setProcessor={setProcessor} moves={moves} setMoves={setMoves} />
       </div>
 
       <div className="flex w-1/3 flex-grow flex-col items-center space-y-2">
         <div className="w-full h-1/2 px-6 pb-6">
           <div className="h-full border-solid border-2 border-black rounded-2xl">
-            <Typography variant="h6" align="center" sx={{ marginTop: 1 }}>
+            <Typography variant="h5" align="center">
               History
             </Typography>
             <Divider className="w-full bg-black" />
@@ -155,7 +155,7 @@ const InGameScreen: React.FC = () => {
 
         <div className="w-full h-1/2 px-6 pt-6">
           <div className="h-full border-solid border-2 border-black rounded-2xl">
-            <Typography variant="h6" align="center" className="h-[7.5%] min-h-6">
+            <Typography variant="h5" align="center" className="h-[7.5%] min-h-6">
               Chat
             </Typography>
             <Divider className="w-full bg-black" />

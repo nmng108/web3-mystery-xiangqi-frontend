@@ -133,7 +133,7 @@ export function getShortErrorMessage(
   return message;
 }
 
-export function verifyAndMakeAllMoves(
+export function verifyAndMakeProvidedMoves(
   moves: MysteryChineseChess.MoveStruct[],
   processor: Web3MysteryXiangqiProcessor,
   playerAddresses: [AddressLike, AddressLike]
@@ -150,6 +150,7 @@ export function verifyAndMakeAllMoves(
         !isReliableMessage(move.details, move.signatures[sigIdx], playerAddresses[sigIdx])
       ) {
         areBothValidSignatures = false;
+        console.error('[verifyMoves] invalid signature:', sigIdx, move.signatures[sigIdx]);
         break;
       }
     }

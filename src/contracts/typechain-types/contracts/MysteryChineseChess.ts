@@ -198,7 +198,6 @@ export interface MysteryChineseChessInterface extends Interface {
       | 'getMatch'
       | 'getPlayer'
       | 'getTable'
-      | 'initializeTables'
       | 'isPlayer'
       | 'joinTable'
       | 'matchIndexes'
@@ -253,7 +252,6 @@ export interface MysteryChineseChessInterface extends Interface {
   encodeFunctionData(functionFragment: 'getMatch', values: [BigNumberish]): string;
   encodeFunctionData(functionFragment: 'getPlayer', values: [AddressLike]): string;
   encodeFunctionData(functionFragment: 'getTable', values: [BigNumberish]): string;
-  encodeFunctionData(functionFragment: 'initializeTables', values?: undefined): string;
   encodeFunctionData(functionFragment: 'isPlayer', values: [AddressLike]): string;
   encodeFunctionData(functionFragment: 'joinTable', values: [BigNumberish]): string;
   encodeFunctionData(functionFragment: 'matchIndexes', values: [BigNumberish]): string;
@@ -302,7 +300,6 @@ export interface MysteryChineseChessInterface extends Interface {
   decodeFunctionResult(functionFragment: 'getMatch', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'getPlayer', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'getTable', data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: 'initializeTables', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'isPlayer', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'joinTable', data: BytesLike): Result;
   decodeFunctionResult(functionFragment: 'matchIndexes', data: BytesLike): Result;
@@ -553,8 +550,6 @@ export interface MysteryChineseChess extends BaseContract {
 
   getTable: TypedContractMethod<[id: BigNumberish], [MysteryChineseChess.TableStructOutput], 'view'>;
 
-  initializeTables: TypedContractMethod<[], [void], 'payable'>;
-
   isPlayer: TypedContractMethod<[_addr: AddressLike], [boolean], 'view'>;
 
   joinTable: TypedContractMethod<[tableId: BigNumberish], [void], 'nonpayable'>;
@@ -695,7 +690,6 @@ export interface MysteryChineseChess extends BaseContract {
   getFunction(
     nameOrSignature: 'getTable'
   ): TypedContractMethod<[id: BigNumberish], [MysteryChineseChess.TableStructOutput], 'view'>;
-  getFunction(nameOrSignature: 'initializeTables'): TypedContractMethod<[], [void], 'payable'>;
   getFunction(nameOrSignature: 'isPlayer'): TypedContractMethod<[_addr: AddressLike], [boolean], 'view'>;
   getFunction(nameOrSignature: 'joinTable'): TypedContractMethod<[tableId: BigNumberish], [void], 'nonpayable'>;
   getFunction(nameOrSignature: 'matchIndexes'): TypedContractMethod<[arg0: BigNumberish], [bigint], 'view'>;

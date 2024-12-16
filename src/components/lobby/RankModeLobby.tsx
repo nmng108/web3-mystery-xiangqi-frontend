@@ -197,7 +197,7 @@ const RankModeLobby: React.FC<Props> = ({ rendersLoadingPage }) => {
   }, [loadingTableList, contract, loadTableList]);
 
   if (isPositiveBigNumber(currentTable?.matchId)) {
-    return null;
+    return;
   }
 
   return (
@@ -221,10 +221,10 @@ const RankModeLobby: React.FC<Props> = ({ rendersLoadingPage }) => {
         </div>
       )}
       {/* Room Options */}
-      {!currentTable && (
-        <div className="flex grow w-full md:w-5/6 lg:w-4/5 xl:w-3/4 2xl:w-[50rem] box-border border-4 border-amber-950 rounded-2xl mx-auto flex-col justify-stretch items-stretch space-y-2">
-          <div className="flex h-8 justify-between">
-            <>
+      <div className="flex grow w-full md:w-5/6 lg:w-4/5 xl:w-3/4 2xl:w-[50rem] box-border border-4 border-amber-950 rounded-2xl mx-auto flex-col justify-stretch items-stretch space-y-2">
+        {!currentTable && (
+          <>
+            <div className="flex h-8 justify-between">
               <Button variant="contained" color="info" className="w-1/3 px-2 py-1" onClick={handleReloadList}>
                 Reload
               </Button>
@@ -239,90 +239,88 @@ const RankModeLobby: React.FC<Props> = ({ rendersLoadingPage }) => {
                   Enter
                 </Button>
               </div>
-            </>
-          </div>
-
-          {/*{!currentTable && (*/}
-          <div
-            className={`flex min-h-40 h-4/5 2xl:h-3/4 border-2 border-solid border-black rounded-lg flex-col text-blue-950`}
-          >
-            <div className="relative w-full h-12 justify-self-start">
-              {/*<IconButton className="block absolute left-0 top-0 w-1/10 my-auto" onClick={handleBackButton}>*/}
-              {/*  <ArrowBackRoundedIcon />*/}
-              {/*</IconButton>*/}
-              <Typography variant="h5" className="my-auto">
-                Rank
-              </Typography>
             </div>
-            <Paper className="w-full overflow-hidden">
-              <TableContainer className="h-full">
-                <Table stickyHeader aria-label="sticky table">
-                  <TableHead>
-                    <TableRow>
-                      {columns.map((column, i) => (
-                        <TableCell key={i} align={column.align} style={{ minWidth: column.minWidth }}>
-                          {column.id === 'id' ? '' : column.label}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {gameTableList //.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                      .map((gameTableData, i) => {
-                        return (
-                          <TableRow
-                            hover
-                            role="checkbox"
-                            tabIndex={-1}
-                            key={i}
-                            className={`${gameTableData.started ? 'bg-blue-gray-500' : ''}`}
-                            onClick={() => handleEnterTable(gameTableData)}
-                          >
-                            {columns.map((column) => {
-                              const value = gameTableData[column.id];
 
-                              return (
-                                <TableCell key={column.id} align={column.align}>
-                                  {column.format && typeof value === 'number'
-                                    ? column.format(value)
-                                    : column.id === 'filledSlots'
-                                      ? `${value.toString()}/2`
-                                      : value.toString()}
-                                </TableCell>
-                              );
-                            })}
-                          </TableRow>
-                        );
-                      })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              {/*<TablePagination*/}
-              {/*  rowsPerPageOptions={[10, 25, 100]}*/}
-              {/*  component="div"*/}
-              {/*  count={tables.length}*/}
-              {/*  rowsPerPage={rowsPerPage}*/}
-              {/*  page={page}*/}
-              {/*  onPageChange={handleChangePage}*/}
-              {/*  onRowsPerPageChange={handleChangeRowsPerPage}*/}
-              {/*/>*/}
-            </Paper>
-            <Backdrop
-              sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
-              open={loadingTableList && rendersLoadingPage}
+            <div
+              className={`flex min-h-40 h-4/5 2xl:h-3/4 border-2 border-solid border-black rounded-lg flex-col text-blue-950`}
             >
-              <CircularProgress color="inherit" /> Loading table list...
-            </Backdrop>
-          </div>
-          {/*)}*/}
+              <div className="relative w-full h-12 justify-self-start">
+                {/*<IconButton className="block absolute left-0 top-0 w-1/10 my-auto" onClick={handleBackButton}>*/}
+                {/*  <ArrowBackRoundedIcon />*/}
+                {/*</IconButton>*/}
+                <Typography variant="h5" className="my-auto">
+                  Rank
+                </Typography>
+              </div>
+              <Paper className="w-full overflow-hidden">
+                <TableContainer className="h-full">
+                  <Table stickyHeader aria-label="sticky table">
+                    <TableHead>
+                      <TableRow>
+                        {columns.map((column, i) => (
+                          <TableCell key={i} align={column.align} style={{ minWidth: column.minWidth }}>
+                            {column.id === 'id' ? '' : column.label}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {gameTableList //.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                        .map((gameTableData, i) => {
+                          return (
+                            <TableRow
+                              hover
+                              role="checkbox"
+                              tabIndex={-1}
+                              key={i}
+                              className={`${gameTableData.started ? 'bg-blue-gray-500' : ''}`}
+                              onClick={() => handleEnterTable(gameTableData)}
+                            >
+                              {columns.map((column) => {
+                                const value = gameTableData[column.id];
 
-          {
-            /*Render table if not entered game yet*/ currentTable && !isPositiveBigNumber(currentTable.matchId) && (
-              <RankModeTable />
-            )
-          }
-        </div>
-      )}
+                                return (
+                                  <TableCell key={column.id} align={column.align}>
+                                    {column.format && typeof value === 'number'
+                                      ? column.format(value)
+                                      : column.id === 'filledSlots'
+                                        ? `${value.toString()}/2`
+                                        : value.toString()}
+                                  </TableCell>
+                                );
+                              })}
+                            </TableRow>
+                          );
+                        })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                {/*<TablePagination*/}
+                {/*  rowsPerPageOptions={[10, 25, 100]}*/}
+                {/*  component="div"*/}
+                {/*  count={tables.length}*/}
+                {/*  rowsPerPage={rowsPerPage}*/}
+                {/*  page={page}*/}
+                {/*  onPageChange={handleChangePage}*/}
+                {/*  onRowsPerPageChange={handleChangeRowsPerPage}*/}
+                {/*/>*/}
+              </Paper>
+              <Backdrop
+                sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
+                open={loadingTableList && rendersLoadingPage}
+              >
+                <CircularProgress color="inherit" /> Loading table list...
+              </Backdrop>
+            </div>
+          </>
+        )}
+
+        {
+          /*Render table if not entered game yet*/ currentTable && !isPositiveBigNumber(currentTable.matchId) && (
+            <RankModeTable />
+          )
+        }
+      </div>
     </>
   );
 };

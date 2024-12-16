@@ -105,7 +105,7 @@ export const AuthContextProvider: React.FC<PropsWithChildren> = ({ children }) =
           });
 
         if (userInfo) {
-          console.log(userInfo);
+          // console.log(userInfo);
           setUserByPlayerStruct(userInfo);
           setRouter(MainNavigator);
           // console.log('switch acc if 0');

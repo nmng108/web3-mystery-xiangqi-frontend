@@ -83,7 +83,7 @@ export const InTableContextProvider: React.FC<PropsWithChildren> = ({ children }
     return () => {
       peer?.off('error', handleError);
     };
-  }, [peer, peer?.open, opponentConnection, connectOpponentPeerAddress, isHost, peerReconnectionTime, currentTable]);
+  }, [peer, peer?.open, opponentConnection, connectOpponentPeerAddress, isHost, currentTable]);
 
   // Handle opponentConnection's events: 'open', 'close' & 'error'.
   useEffect(() => {
@@ -98,8 +98,9 @@ export const InTableContextProvider: React.FC<PropsWithChildren> = ({ children }
 
     if (opponentConnection) {
       handleOpen = () => {
-        setIsConnectingToPeer(false);
-        setConnectedToOpponent(true);
+        // setIsConnectingToPeer(false);
+        // setConnectedToOpponent(true);
+        // console.log('[InTableContext] setConnectedToOpponent(true)');
       };
       handleClose = () => {
         // If the disconnection is caused by player having exited table/match, do not try to reconnect
@@ -117,11 +118,14 @@ export const InTableContextProvider: React.FC<PropsWithChildren> = ({ children }
         setConnectedToOpponent(false);
       };
       handleIceStateChanged = (state) => {
-        if (!['disconnected', 'closed', 'failed'].includes(state)) return;
-
-        console.log('trigger reconnection (from handleIceStateChanged)');
-        setIsConnectingToPeer(true);
-        setConnectedToOpponent(false);
+        if (['disconnected', 'closed', 'failed'].includes(state)) {
+          console.log('trigger reconnection (from handleIceStateChanged)');
+          setIsConnectingToPeer(true);
+          setConnectedToOpponent(false);
+        } else if (state == 'connected') {
+          setIsConnectingToPeer(false);
+          setConnectedToOpponent(true);
+        }
       };
 
       opponentConnection.on('open', handleOpen);
@@ -138,7 +142,6 @@ export const InTableContextProvider: React.FC<PropsWithChildren> = ({ children }
     };
   }, [
     connectOpponentPeerAddress,
-    peerReconnectionTime,
     currentTable,
     isConnectingToPeer,
     isHost,
@@ -198,6 +201,7 @@ export const InTableContextProvider: React.FC<PropsWithChildren> = ({ children }
     let peerReconnectionAttempt;
 
     if (
+      inTableAndHasEnoughPlayers &&
       peerReconnectionCounter !== null &&
       peerReconnectionCounter >= 0 &&
       (peerReconnectionCounter + 1) * PEER_RECONNECT_INTERVAL <= MAX_PEER_CONNECTION_ESTABLISHMENT_TIME &&
@@ -218,7 +222,7 @@ export const InTableContextProvider: React.FC<PropsWithChildren> = ({ children }
         console.log('clear interval');
       }
     };
-  }, [connectOpponentPeerAddress, isHost, opponentAddress, peerReconnectionCounter]);
+  }, [connectOpponentPeerAddress, currentTable?.players.length, isHost, opponentAddress, peerReconnectionCounter]);
 
   // Executed firstly to (re)connect to opponent in case 2 players lost connection to each other (due to any reason)
   // Note: ONLY host sends offer for peer connection establishment
@@ -301,7 +305,8 @@ export const InTableContextProvider: React.FC<PropsWithChildren> = ({ children }
     connectedToOpponent,
     keepsConnectionFromStart,
     setKeepsConnectionFromStart,
-    peerConnectionTimedOut: isConnectingToPeer && peerReconnectionTime <= 0 && !opponentConnection?.open,
+    peerConnectionTimedOut:
+      isConnectingToPeer && peerReconnectionTime >= MAX_PEER_CONNECTION_ESTABLISHMENT_TIME && !connectedToOpponent,
   };
 
   return <InTableContext.Provider value={contextValue}>{children}</InTableContext.Provider>;

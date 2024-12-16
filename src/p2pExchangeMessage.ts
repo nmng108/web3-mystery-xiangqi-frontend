@@ -3,8 +3,9 @@ import { MysteryChineseChess } from './contracts/typechain-types';
 
 export enum P2PMessageType {
   NONE,
-  EXIT,
-  START_GAME,
+  EXITED,
+  STARTING_GAME,
+  ENTERED_MATCH,
   PAUSE_GAME,
   SYNC,
   CHAT,

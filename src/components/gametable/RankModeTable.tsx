@@ -38,8 +38,14 @@ const RankModeTable: React.FC = () => {
   } = useGlobalContext();
   const { contract, user, setUserByPlayerStruct } = useAuthContext();
   const { peer, opponentConnection, connectOpponentPeerAddress } = usePeerContext();
-  const { players, isHost, setIsConnectingToPeer, peerConnectionTimedOut, setKeepsConnectionFromStart } =
-    useInTableContext();
+  const {
+    players,
+    isHost,
+    setIsConnectingToPeer,
+    peerConnectionTimedOut,
+    setKeepsConnectionFromStart,
+    connectedToOpponent,
+  } = useInTableContext();
 
   const handleExitTable = useCallback(async () => {
     if (currentTable && user) {
@@ -122,7 +128,7 @@ const RankModeTable: React.FC = () => {
       await contract.startNewMatch(currentTable.id as never);
       setWaitsForTransactionalActionMessage(null);
       setWaitsForCreatingNewMatch(true);
-      opponentConnection.send({ type: P2PMessageType.START_GAME } as P2PExchangeMessageInterface);
+      opponentConnection.send({ type: P2PMessageType.STARTING_GAME } as P2PExchangeMessageInterface);
     } catch (err) {
       const message = err.revert?.name == ContractError.InvalidAction ? err.revert.message : getShortErrorMessage(err);
 
@@ -134,17 +140,17 @@ const RankModeTable: React.FC = () => {
 
   // Set contract's event listeners relating to table
   useEffect(() => {
-    let handleNewMatchStartedEvent: (matchId: BigNumberish, _playerAddresses: [AddressLike, AddressLike]) => void;
+    let handleNewMatchStarted: (matchId: BigNumberish, _playerAddresses: [AddressLike, AddressLike]) => void;
     let handleJoinedTable: (playerAddress: AddressLike, tableId: BigNumberish) => void;
     let handleUpdatedTable: (table: MysteryChineseChess.TableStructOutput) => void;
     let handleUpdatedTableId: (oldTableId: BigNumberish, newTableId: BigNumberish) => void;
     let handleExitedTable: (playerAddress: AddressLike, tableId: BigNumberish) => void;
 
-    if (contract && currentTable) {
+    if (contract) {
       console.log('create table-related listeners');
-      handleNewMatchStartedEvent = (matchId, _playerAddresses) => {
+      handleNewMatchStarted = (matchId, _playerAddresses) => {
         if (_playerAddresses.find((addr) => isSameAddress(addr, user.playerAddress))) {
-          contract.off(contract.filters.NewMatchStarted, handleNewMatchStartedEvent);
+          contract.off(contract.filters.NewMatchStarted, handleNewMatchStarted);
           setCurrentTableByTableStruct({ ...currentTable, matchId: matchId });
           setWaitsForCreatingNewMatch(false);
           setKeepsConnectionFromStart(true);
@@ -178,16 +184,22 @@ const RankModeTable: React.FC = () => {
           return;
         }
 
-        console.log('exec exitttttt');
         if (isSameAddress(playerAddress, user.playerAddress)) {
+          console.log('exec exitttttt. You left');
           // If this user had just exited a table
           // console.log("It's you who had exited");
           setUserByPlayerStruct({ ...user, tableId: 0 });
           setCurrentTableByTableStruct(null);
           setWaitsForTransactionalActionMessage(undefined);
           setFullscreenToastMessage({ message: 'Exited table', level: 'info' });
+
+          if (connectedToOpponent) {
+            opponentConnection.send({
+              type: P2PMessageType.EXITED,
+            } as P2PExchangeMessageInterface);
+          }
         } else {
-          console.log(players);
+          console.log('exec exitttttt. Opponent left');
           const oldOpponent: MysteryChineseChess.PlayerStruct = players.find((player) =>
             isSameAddress(player.playerAddress, playerAddress)
           );
@@ -196,20 +208,17 @@ const RankModeTable: React.FC = () => {
           // console.log('should render notif for oppponent left');
 
           if (oldOpponent) {
-            setFullscreenToastMessage({
-              message: `${oldOpponent.playerName} has left`,
-              level: 'info',
-            });
+            setFullscreenToastMessage({ message: `${oldOpponent.playerName} has left`, level: 'info' });
           }
-        }
 
-        if (opponentConnection) {
-          connectOpponentPeerAddress(null);
-          console.log('Closing peer connection to old opponent');
+          if (opponentConnection) {
+            connectOpponentPeerAddress(null);
+            console.log('Closing peer connection to old opponent');
+          }
         }
       };
 
-      contract.on(contract.filters.NewMatchStarted, handleNewMatchStartedEvent);
+      contract.on(contract.filters.NewMatchStarted, handleNewMatchStarted);
       contract.on(contract.filters.JoinedTable, handleJoinedTable);
       contract.on(contract.filters.UpdatedTable, handleUpdatedTable);
       contract.on(contract.filters.UpdatedTableId, handleUpdatedTableId);
@@ -244,12 +253,20 @@ const RankModeTable: React.FC = () => {
     setIsConnectingToPeer,
     setWaitsForTransactionalActionMessage,
     setKeepsConnectionFromStart,
+    connectedToOpponent,
   ]);
 
   useEffect(() => {
-    const handleGetStartGameMessage = (data: P2PExchangeMessageInterface) => {
-      if (data.type == P2PMessageType.START_GAME) {
+    const handleGetStartGameMessage = (message: P2PExchangeMessageInterface) => {
+      if (message.type == P2PMessageType.STARTING_GAME) {
         setWaitsForCreatingNewMatch(true);
+      }
+
+      if (message.type == P2PMessageType.EXITED) {
+        (async function () {
+          setCurrentTableByTableStruct(await contract.getTable(currentTable.id));
+          connectOpponentPeerAddress(null);
+        })();
       }
     };
 

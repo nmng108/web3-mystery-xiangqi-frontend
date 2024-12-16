@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LOCAL_STORAGE_KEYS, UserInterfaceMatchState } from '../constants';
-import { MatchSyncMessageInterface, P2PMessageType, SyncData } from '../p2pExchangeMessage';
+import {
+  MatchSyncMessageInterface,
+  P2PExchangeMessageInterface,
+  P2PMessageType,
+  SyncData,
+} from '../p2pExchangeMessage';
 import {
   computeRemainingTimeControls,
   getShortErrorMessage,
   isEqual,
   isSameAddress,
   isZeroAddress,
-  verifyAndMakeAllMoves,
+  verifyAndMakeProvidedMoves,
 } from '../utilities';
 import { useAuthContext, useGlobalContext, useInTableContext, usePeerContext } from './index.ts';
 import { MysteryChineseChess } from '../contracts/typechain-types';
@@ -36,11 +41,12 @@ type Props = {
  * @param userInterfaceMatchState
  * @param setUserInterfaceMatchState
  * @param match
- * @param moves
  * @param setPauseReason
+ * @param moves
  * @param setMoves
- * @param setTimeControls
  * @param timeControls
+ * @param setTimeControls
+ * @param setCurrentTurn
  * @param processor
  */
 const useSyncMatchData = ({
@@ -57,6 +63,14 @@ const useSyncMatchData = ({
 }: Props) => {
   const [hadSynchronizedBefore, setHadSynchronizedBefore] = useState<boolean>(false);
   const [hasSynchronizedToPeer, setHasSynchronizedToPeer] = useState<boolean>(false);
+  /**
+   * True if the player (with specified index) notified the other one.
+   */
+  const [hasSentInitiatingMessages, setHasSentInitiatingMessages] = useState<[boolean, boolean]>([false, false]);
+  /**
+   * Only used for host.
+   */
+  const [hasSentFirstSYNCMessage, setHasSentFirstSYNCMessage] = useState<boolean>(false);
   const { signer, contract, user } = useAuthContext();
   const { currentTable, setFullscreenToastMessage } = useGlobalContext();
   const { peer, opponentConnection } = usePeerContext();
@@ -127,20 +141,18 @@ const useSyncMatchData = ({
       setHadSynchronizedBefore(true);
       // setHasSynchronizedToPeer(true);
       // setUserInterfaceMatchState(UserInterfaceMatchState.PLAYING);
-      console.log('setHadSynchronizedBefore(true); (caused by keepsConnectionFromStart)');
     }
-  }, [keepsConnectionFromStart, setUserInterfaceMatchState]);
+  }, [connectedToOpponent, keepsConnectionFromStart, opponentConnection, setUserInterfaceMatchState]);
 
   useEffect(() => {
     if (hasSynchronizedToPeer) {
       // not work properly as expected??
-      console.log('entered game (caused by hasSynchronizedToPeer) before');
       setUserInterfaceMatchState(UserInterfaceMatchState.PLAYING);
-      console.log('entered game (caused by hasSynchronizedToPeer) after');
+      console.log('matchState = PLAYING (2) (caused by hasSynchronizedToPeer)');
       setPauseReason(null);
     } else {
-      setUserInterfaceMatchState(UserInterfaceMatchState.PAUSED_DUE_TO_DISCONNECTION);
-      console.log('pause game (caused by !hasSynchronizedToPeer)');
+      setUserInterfaceMatchState(UserInterfaceMatchState.PAUSED);
+      console.log('matchState = PAUSED (caused by !hasSynchronizedToPeer)');
     }
   }, [hasSynchronizedToPeer, setPauseReason, setUserInterfaceMatchState]);
 
@@ -167,7 +179,7 @@ const useSyncMatchData = ({
 
       // If just back to game, load & compute match data (if exists, which includes `move` and `timeControls`)
       // from local storage 1 time.
-      if (!hasSynchronizedToPeer && !loadedStoredMoves.current) {
+      if (/*!hasSynchronizedToPeer && */ !loadedStoredMoves.current) {
         const storedMatchId: string = localStorage.getItem(LOCAL_STORAGE_KEYS.MATCH) as string;
         const storedMoves = JSON.parse(
           localStorage.getItem(LOCAL_STORAGE_KEYS.MOVES)
@@ -177,7 +189,7 @@ const useSyncMatchData = ({
         hasStoredMoves = storedMoves?.length > 0;
 
         if (backsToMatch && hasStoredMoves) {
-          finalMoveList = verifyAndMakeAllMoves(storedMoves, processor, match.players);
+          finalMoveList = verifyAndMakeProvidedMoves(storedMoves, processor, match.players);
         }
 
         finalComputedTimeControls = computeRemainingTimeControls(
@@ -193,7 +205,10 @@ const useSyncMatchData = ({
       if (backsToMatch && hasStoredMoves) {
         setMoves(finalMoveList);
         setTimeControls(finalComputedTimeControls);
-        setCurrentTurn(1 - Number(finalMoveList[finalMoveList.length - 1].details.playerIndex));
+
+        if (finalMoveList.length > 0) {
+          setCurrentTurn(1 - Number(finalMoveList[finalMoveList.length - 1].details.playerIndex));
+        }
       }
 
       // If not connected to opponent yet, stop the SYNC process
@@ -214,9 +229,28 @@ const useSyncMatchData = ({
 
       if (!syncRequiringStates.includes(userInterfaceMatchState)) return;
 
-      console.log('Enter SYNC process');
       setPauseReason('Synchronizing...');
 
+      if (opponentConnection.open && hasSentInitiatingMessages.filter((unchecked) => !unchecked).length > 0) {
+        if (!hasSentInitiatingMessages[playerIndex]) {
+          opponentConnection.send({
+            type: P2PMessageType.ENTERED_MATCH,
+          } as P2PExchangeMessageInterface);
+
+          hasSentInitiatingMessages[playerIndex] = true;
+          setHasSentInitiatingMessages([...hasSentInitiatingMessages]);
+          console.log(
+            'notified opponent! (wait until both of you notify each other about your existences, SYNC process will continue)'
+          );
+        } else {
+          console.log('waiting for initiating message from opponent...');
+        }
+
+        return;
+      }
+
+      console.log('Enter SYNC process');
+      // If a match is just started, host is in charge of sending this message (not require signature)
       if (keepsConnectionFromStart && isHost) {
         console.log('send first msg when starting');
         let totalTimeControl: number = Number(match.timeControl) - (Date.now() - Number(match.startTimestamp));
@@ -229,11 +263,18 @@ const useSyncMatchData = ({
           hadSync: hadSynchronizedBefore,
           timeControls: [totalTimeControl, totalTimeControl],
         });
+        // setHasSentFirstSYNCMessage(true);
 
         return;
       }
 
-      if (!hasSynchronizedToPeer && connectedToOpponent && isHost) {
+      // If any of 2 players leaves and then enters match again, host is in charge of sending this message
+      if (
+        /*!hasSynchronizedToPeer && */ connectedToOpponent &&
+        opponentConnection.open &&
+        !hasSentFirstSYNCMessage &&
+        isHost
+      ) {
         // console.log('(host) ', {
         //   packetNum: 0,
         //   matchId: String(match.id),
@@ -253,6 +294,8 @@ const useSyncMatchData = ({
           true,
           finalMoveList
         );
+        setHasSentFirstSYNCMessage(true);
+        console.log('setHasSentFirstSYNCMessage(true)');
       }
     }
   }, [
@@ -273,11 +316,31 @@ const useSyncMatchData = ({
     userInterfaceMatchState,
     keepsConnectionFromStart,
     setCurrentTurn,
+    hasSentFirstSYNCMessage,
+    hasSentInitiatingMessages,
+    playerIndex,
   ]);
 
+  // Reset the SYNC process ONLY IF 2 players lost connection to each other.
+  useEffect(() => {
+    if (!connectedToOpponent || !opponentConnection || !opponentConnection.open) {
+      setHasSentFirstSYNCMessage(false);
+      setHasSentInitiatingMessages([false, false]);
+    }
+  }, [connectedToOpponent, opponentConnection]);
+
+  // Handle SYNC and GAME_STARTED messages from peer
   useEffect(() => {
     const handleSyncMessage = (message: MatchSyncMessageInterface) => {
-      // Filter to obtain exact message
+      if (message.type == P2PMessageType.ENTERED_MATCH) {
+        hasSentInitiatingMessages[1 - playerIndex] = true; // check the slot of opponent
+
+        setHasSentInitiatingMessages([...hasSentInitiatingMessages]);
+        console.log('received init message.', hasSentInitiatingMessages);
+        return;
+      }
+
+      // Filter to obtain only SYNC messages
       if (message.type != P2PMessageType.SYNC) return;
 
       // Filter to obtain exact message
@@ -317,6 +380,7 @@ const useSyncMatchData = ({
       // If 2 peers has connected to each other before the start of a match, the SYNC process will immediately be terminated
       // by sending 1 message back without signature from the non-host peer.
       if (keepsConnectionFromStart && opponentData.hadSync) {
+        console.log('received SYNC message right after the game started');
         if (!isHost && opponentData.packetNum == 0) {
           sendSYNCMessage({
             packetNum: opponentData.packetNum + 1,
@@ -390,13 +454,13 @@ const useSyncMatchData = ({
           const masterMoveArray: MysteryChineseChess.MoveStruct[] =
             message.moves == null || moves.length > message.moves.length ? moves : message.moves;
           const remainMoveArray: MysteryChineseChess.MoveStruct[] =
-            message.moves != null && moves.length > message.moves.length ? message.moves : moves;
-          let maxVerifiedMoveLength: number = 0;
+            message.moves == null || moves.length > message.moves.length ? message.moves : moves;
+          let maxIdenticalMovesLength: number = 0;
 
           for (let mvIdx = 0; mvIdx < masterMoveArray.length; mvIdx++) {
             const masterDetails: MysteryChineseChess.MoveDetailsStruct = masterMoveArray[mvIdx].details;
 
-            if (mvIdx < remainMoveArray.length) {
+            if (remainMoveArray && mvIdx < remainMoveArray.length) {
               const remainDetails: MysteryChineseChess.MoveDetailsStruct = remainMoveArray[mvIdx].details;
               let isIdentical: boolean =
                 isEqual(masterDetails.playerIndex, remainDetails.playerIndex) &&
@@ -409,6 +473,7 @@ const useSyncMatchData = ({
               for (let sigIdx = 0; sigIdx < 2; sigIdx++) {
                 if (masterMoveArray[mvIdx].signatures[sigIdx] !== remainMoveArray[mvIdx].signatures[sigIdx]) {
                   isIdentical = false;
+                  console.log('not identical at', mvIdx);
                   break;
                 }
               }
@@ -427,11 +492,11 @@ const useSyncMatchData = ({
 
             // if (!isTrustable) break;
 
-            maxVerifiedMoveLength += 1;
+            maxIdenticalMovesLength += 1;
           }
 
           const isSameMoveArray: boolean =
-            maxVerifiedMoveLength == masterMoveArray.length && masterMoveArray.length == remainMoveArray.length;
+            maxIdenticalMovesLength == masterMoveArray.length && masterMoveArray.length == remainMoveArray.length;
           // Acceptable difference is less than `ALLOWED_TIME_CONTROL_DIFF` milliseconds
           const isSameTimeControls: boolean =
             Math.abs(timeControls[0] - opponentData.timeControls[0]) < ALLOWED_TIME_CONTROL_DIFF &&
@@ -467,15 +532,15 @@ const useSyncMatchData = ({
               moves
             );
           } else {
-            const verifiedMoves: MysteryChineseChess.MoveStruct[] = masterMoveArray.slice(0, maxVerifiedMoveLength);
+            const identicalMoves: MysteryChineseChess.MoveStruct[] = masterMoveArray.slice(0, maxIdenticalMovesLength);
             let finalMoves: MysteryChineseChess.MoveStruct[] = moves;
             let computedRemainingTimeControls: [number, number] = timeControls;
 
             // Apply new moves
-            if (moves.length != verifiedMoves.length) {
+            if (moves.length != identicalMoves.length) {
               processor.resetBoard();
 
-              finalMoves = verifyAndMakeAllMoves(finalMoves, processor, match.players);
+              finalMoves = verifyAndMakeProvidedMoves(identicalMoves, processor, match.players);
               computedRemainingTimeControls = computeRemainingTimeControls(
                 finalMoves,
                 match.timeControl,
@@ -485,6 +550,10 @@ const useSyncMatchData = ({
 
               setMoves(finalMoves);
               setTimeControls(computedRemainingTimeControls);
+
+              if (finalMoves?.length > 0) {
+                setCurrentTurn(1 - Number(finalMoves[finalMoves.length - 1].details.playerIndex));
+              }
             }
 
             await sendSYNCMessage(
@@ -511,7 +580,7 @@ const useSyncMatchData = ({
       })();
     };
 
-    if (opponentConnection && processor) {
+    if (opponentConnection) {
       opponentConnection.on('data', handleSyncMessage);
     }
 
@@ -545,6 +614,7 @@ const useSyncMatchData = ({
     signer,
     timeControls,
     user,
+    keepsConnectionFromStart,
   ]);
 
   useEffect(() => {

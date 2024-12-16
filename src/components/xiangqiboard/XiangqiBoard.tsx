@@ -10,7 +10,6 @@ import {
   getShortErrorMessage,
   isBlank,
   isEqual,
-  isNonZeroAddress,
   isPositiveBigNumber,
   isReliableMessage,
   isSameAddress,
@@ -21,6 +20,7 @@ import { MessageAndTimestamp, P2PExchangeMessageInterface, P2PMessageType } from
 import { useSyncMatchData } from '../../hooks/useSyncMatchData';
 import { type AddressLike, type BigNumberish } from 'ethers';
 import WalletException from '../../exceptions/WalletException.ts';
+import resignFlag from '../../assets/resign-flag.png';
 
 type Props = {
   processor: Web3MysteryXiangqiProcessor;
@@ -39,6 +39,7 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
   const [validMoves, setValidMoves] = useState<Position[]>([]);
   const [currentTurn, setCurrentTurn] = useState<number>(0); // allows only 0 or 1
   const [pauseReason, setPauseReason] = useState<string>();
+  const [signingTask, setSigningTask] = useState<() => void>();
   const { signer, contract, user, setUserByPlayerStruct } = useAuthContext();
   const {
     currentTable,
@@ -76,11 +77,6 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
     [currentTable?.players, currentTurn, user?.playerAddress]
   );
   const isJoiningMatch: boolean = useMemo(() => isPositiveBigNumber(currentTable?.matchId), [currentTable?.matchId]);
-  const isInTableButNotJoiningMatch: boolean = useMemo(
-    () => currentTable && !isPositiveBigNumber(currentTable.matchId),
-    [currentTable]
-  );
-  const isNotInTable: boolean = useMemo(() => user && !isPositiveBigNumber(user.tableId), [user]);
 
   const signMessageAsync = useCallback(
     async (message: string | Uint8Array | object) => {
@@ -182,6 +178,7 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
         type: P2PMessageType.RESIGN,
         // data: resignData,
       } as P2PExchangeMessageInterface);
+      setUserInterfaceMatchState(UserInterfaceMatchState.PAUSED);
     } catch (err) {
       setFullscreenToastMessage({ message: getShortErrorMessage(err), level: 'error' });
       setWaitsForTransactionalActionMessage(undefined);
@@ -194,6 +191,16 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
       const currentPieceColor: PieceColor = playerIndex != -1 ? PieceColor[PieceColor[playerIndex]] : PieceColor.NONE;
 
       if (userInterfaceMatchState != UserInterfaceMatchState.PLAYING || !isMyTurn) {
+        return;
+      }
+
+      if (signingTask != undefined) {
+        setFullscreenToastMessage({
+          message: "You must sign the last opponent's move before you can continue making your own",
+          level: 'error',
+          duration: 3000,
+        });
+        console.log('sign now!!!!!');
         return;
       }
 
@@ -297,6 +304,7 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
       contract,
       match?.id,
       moves,
+      signingTask,
     ]
   );
 
@@ -363,6 +371,9 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
             });
             setUserInterfaceMatchState(UserInterfaceMatchState.ENDED);
             // contract.verifyCheckmate(match.id as never, moves as never);
+
+            setCurrentTurn((prev) => 1 - prev);
+            setMoves((prev) => [...prev, receivedMove]);
           } else if (
             isBlank(opponentSignature) ||
             !isReliableMessage(moveDetails, opponentSignature, opponentAddress)
@@ -379,27 +390,30 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
             return;
           } else {
             // Sign the received move and send back to opponent
-            receivedMove.signatures[playerIndex] = await signMessageAsync(moveDetails).catch((err) => {
-              setFullscreenToastMessage({ message: getShortErrorMessage(err), level: 'error' });
+            const localSigningTask = async () => {
+              console.log('sign to continueee');
+              receivedMove.signatures[playerIndex] = await signMessageAsync(moveDetails).catch((err) => {
+                throw new WalletException(err);
+              });
+
               opponentConnection.send({
-                type: P2PMessageType.PAUSE_GAME,
-                data: {
-                  timestamp: Date.now(),
-                  message: err.message,
-                } as MessageAndTimestamp,
+                type: P2PMessageType.MOVE_VALIDATED_BY_PEER,
+                data: receivedMove,
               } as P2PExchangeMessageInterface);
 
-              throw new WalletException(err);
+              setCurrentTurn((prev) => 1 - prev);
+              setMoves((prev) => [...prev, receivedMove]);
+              setSigningTask(undefined);
+              console.log('rm signing task');
+            };
+
+            await localSigningTask().catch((err) => {
+              if (err instanceof WalletException) {
+                setSigningTask(() => localSigningTask);
+                console.log('set signing task');
+              }
             });
-
-            opponentConnection.send({
-              type: P2PMessageType.MOVE_VALIDATED_BY_PEER,
-              data: receivedMove,
-            } as P2PExchangeMessageInterface);
           }
-
-          setCurrentTurn((prev) => 1 - prev);
-          setMoves((prev) => [...prev, receivedMove]);
         })();
 
         return;
@@ -439,28 +453,26 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
         setMoves((prev) => [...prev, moveData]);
       }
 
-      if (message.type == P2PMessageType.INVALID_SIGNATURE) {
-        console.log("[INVALID_SIGNATURE] received opponent's message: ", message);
-        // TODO: stop game & notify draw result
-        setUserInterfaceMatchState(UserInterfaceMatchState.ENDED);
-        setFullscreenToastMessage({
-          message: 'You just made a invalid signature. This match was ended in a draw!',
-          level: 'error',
-          duration: 10000,
-        });
-      }
-
       if (
         [P2PMessageType.INVALID_MESSAGE, P2PMessageType.INVALID_SIGNATURE, P2PMessageType.INVALID_MOVE].includes(
           message.type
         )
       ) {
-        console.log("[INVALID_MOVE] received opponent's message: ", message);
+        console.log("[INVALID_INFO] received opponent's message: ", message);
         // TODO: stop game & notify result
         setUserInterfaceMatchState(UserInterfaceMatchState.ENDED);
         setFullscreenToastMessage({
           message: 'You just made a invalid signature. You lose this match!',
           level: 'error',
+          duration: 10000,
+        });
+      }
+
+      if (message.type == P2PMessageType.RESIGN) {
+        setUserInterfaceMatchState(UserInterfaceMatchState.PAUSED);
+        setFullscreenToastMessage({
+          message: 'Opponent has resigned! Waiting for verification result from server...',
+          level: 'success',
           duration: 10000,
         });
       }
@@ -492,6 +504,7 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
     signMessageAsync,
     signer,
     user,
+    setMoves,
   ]);
 
   useEffect(() => {
@@ -501,12 +514,15 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
     // let handleApprovedDrawOffer: (matchId: BigNumberish, playerAddress: string) => void;
     // let handleDeclinedDrawOffer: (matchId: BigNumberish, playerAddress: string) => void;
 
-    if (contract && match) {
+    if (contract) {
       handleMatchEnded = async (_match) => {
         if (isEqual(_match.id, match.id)) {
           const duration: number = 5000;
-
-          setMatch(_match);
+          console.log('received MatchEnded event:', _match);
+          setMatch(null);
+          setCurrentTableByTableStruct(await contract.getTable(user.tableId as never));
+          setUserByPlayerStruct(await contract.getPlayer(user.playerAddress));
+          setWaitsForTransactionalActionMessage(undefined);
 
           switch (Number(_match.matchResult.resultType)) {
             case MatchResultType.Checkmate | MatchResultType.Timeout: {
@@ -515,8 +531,6 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
                 ? `You won! +${_match.matchResult.increasingElo} Elo`
                 : `You lose! -${_match.matchResult.decreasingElo} Elo`;
 
-              setMatch(null);
-              setCurrentTableByTableStruct(await contract.getTable(user.tableId as never));
               setFullscreenToastMessage({ message: message, level: isWon ? 'success' : 'info', duration });
               return;
             }
@@ -526,7 +540,6 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
                 ? `Resign request had been verified. You won! +${_match.matchResult.increasingElo} Elo`
                 : `Resign request had been verified. You lose! -${_match.matchResult.decreasingElo} Elo`;
 
-              setCurrentTableByTableStruct(await contract.getTable(user.tableId as never));
               setFullscreenToastMessage({ message: message, level: isWon ? 'success' : 'info', duration });
               return;
             }
@@ -574,7 +587,17 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
         // contract.off(contract.filters.DeclinedDrawOffer, handleDeclinedDrawOffer);
       }
     };
-  }, [contract, match, playerIndex, setCurrentTableByTableStruct, setFullscreenToastMessage, user, user?.tableId]);
+  }, [
+    contract,
+    match,
+    playerIndex,
+    setCurrentTableByTableStruct,
+    setFullscreenToastMessage,
+    setUserByPlayerStruct,
+    setWaitsForTransactionalActionMessage,
+    user,
+    user?.tableId,
+  ]);
 
   // Set isMyTurn. This logic may need to be complemented later
   // useEffect(() => {
@@ -601,7 +624,7 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
       setProcessor(null);
       console.log('unset processor');
     }
-  }, [contract, match, playerIndex, signer]);
+  }, [contract, currentTable, match, playerIndex, setProcessor, signer, user]);
 
   // Set valid moves to be rendered
   useEffect(() => {
@@ -610,7 +633,7 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
     } else {
       setValidMoves([]);
     }
-  }, [selectedPiecePosition, processor]);
+  }, [selectedPiecePosition, processor, user, currentTable]);
 
   // Countdown until leaving match after the match had ended.
   useEffect(() => {
@@ -629,10 +652,13 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
   useEffect(() => {
     if (isJoiningMatch && match) {
       localStorage.setItem(LOCAL_STORAGE_KEYS.MATCH, String(match.id));
-    } else if (isNotInTable || isInTableButNotJoiningMatch) {
+    } else if (
+      user &&
+      (!isPositiveBigNumber(user.tableId) || (currentTable && !isPositiveBigNumber(currentTable.matchId)))
+    ) {
       localStorage.removeItem(LOCAL_STORAGE_KEYS.MATCH);
     }
-  }, [isJoiningMatch, isInTableButNotJoiningMatch, isNotInTable, match]);
+  }, [currentTable, isJoiningMatch, match, user]);
 
   // Store all moves of current match to storage for later lookup, specifically when user reloads page
   // Read by the `useSyncMatchData` hook
@@ -640,20 +666,27 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
     if (isJoiningMatch && moves?.length > 0) {
       console.log('storing move list: ', moves);
       localStorage.setItem(LOCAL_STORAGE_KEYS.MOVES, JSON.stringify(moves));
-    } else if (isNotInTable || isInTableButNotJoiningMatch) {
+    } else if (
+      user &&
+      (!isPositiveBigNumber(user.tableId) || (currentTable && !isPositiveBigNumber(currentTable.matchId)))
+    ) {
       localStorage.removeItem(LOCAL_STORAGE_KEYS.MOVES);
     }
-  }, [isJoiningMatch, isInTableButNotJoiningMatch, isNotInTable, moves, moves?.length]);
+    console.log('should rm storedMoves?', isJoiningMatch, moves);
+  }, [currentTable, isJoiningMatch, moves, moves?.length, user]);
 
-  if (!currentTable || !isPositiveBigNumber(currentTable.matchId)) {
+  if (!currentTable || !isJoiningMatch) {
     return;
   }
 
   return (
     <div className="flex grow w-full md:w-5/6 lg:w-4/5 xl:w-3/4 2xl:w-[50rem] box-border border-solid border-4 border-amber-950 rounded-2xl mx-auto flex-col justify-stretch items-stretch space-y-2">
       <div className="relative w-full h-12 justify-self-start">
-        <IconButton className="block absolute left-0 top-0 w-1/10 h-10 my-auto" onClick={handleBackButton}>
+        <IconButton className="block absolute left-0 top-0 w-10 h-10 my-auto" onClick={handleBackButton}>
           <ArrowBackRoundedIcon />
+        </IconButton>
+        <IconButton className="block absolute left-12 top-0 w-12 h-12 my-auto" onClick={handleResignButton}>
+          <img src={resignFlag} alt="Resign" className="w-full h-full" />
         </IconButton>
         <div className="h-full my-auto text-center">
           <Typography variant="h5" className="text-center">
@@ -682,11 +715,12 @@ const XiangqiBoard: React.FC<Props> = ({ processor, setProcessor, moves, setMove
                 {row.map((cell, x) => (
                   <>
                     {x == 0 && (
-                      <div className="w-[10%] h-full text-center">
+                      <div key={-1} className="w-[10%] h-full text-center">
                         <p>{String.fromCharCode(65 + y)}</p>
                       </div>
                     )}
                     <div
+                      key={x}
                       className="relative w-[10%] h-full rounded-full"
                       onClick={() => handleClickPiecePosition({ y: y, x: x })}
                     >
