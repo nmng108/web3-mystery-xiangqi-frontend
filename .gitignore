@@ -25,9 +25,8 @@ dist-ssr
 *.sln
 *.sw?
 
-# misc
-.env
-.env.local
-.env.development
-.env.test
-.env.production
+# Environment (follow Vite's instructions)
+.env*.local
+#.env.development
+#.env.test
+#.env.production

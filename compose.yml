@@ -2,8 +2,12 @@ services:
   dev-app:
     build:
       context: .
+      target: development
+#      args:
+#        PEER_SERVER_HOST:
+#        PEER_SERVER_PORT:
     ports:
-      - 5170:5173
+      - 5173:5173
     develop:
       watch:
         - action: rebuild

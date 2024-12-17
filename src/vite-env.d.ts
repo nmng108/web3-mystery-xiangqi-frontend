@@ -1,20 +1,28 @@
 /// <reference types="vite/client" />
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
+interface ImportMetaEnv {
+  VITE_CONTRACT_ADDRESS: string;
+  VITE_CHAIN_ID: number;
+  VITE_PEER_SERVER_HOST: string;
+  VITE_PEER_SERVER_PORT: number;
+  VITE_PEER_SERVER_PATH: string;
+  VITE_PEER_SERVER_SECURE: boolean; // SSL
+  VITE_PEER_SERVER_KEY: string | undefined;
+  VITE_PEER_SERVER_PING_INTERVAL: number; // unit: millisecond
+  VITE_PEER_SERVER_DEBUG: 0 | 1 | 2 | 3;
+}
+
 declare global {
   namespace React {}
 
-  namespace NodeJS {
-    interface ProcessEnv {
-      CONTRACT_ADDRESS: string;
-      CHAIN_ID: number;
-      PEER_SERVER_HOST: string;
-      PEER_SERVER_PORT: number;
-      PEER_SERVER_PATH: string;
-      PEER_SERVER_SECURE: boolean; // SSL
-      PEER_SERVER_KEY: string | undefined;
-      PEER_SERVER_PING_INTERVAL: number; // unit: millisecond
-      PEER_SERVER_DEBUG: 0 | 1 | 2 | 3;
-    }
-  }
+  // namespace NodeJS {
+  //   interface ProcessEnv {
+  //   }
+  // }
 
   interface WindowEventMap {
     'eip6963:announceProvider': CustomEvent;
