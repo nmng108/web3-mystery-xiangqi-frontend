@@ -10,7 +10,7 @@ import { ContractError } from '../contracts/abi';
  * a (set of) action should be taken depending on specific context.
  */
 const MAX_PEER_CONNECTION_ESTABLISHMENT_TIME: number = 60 * 1000; // ms
-const PEER_RECONNECT_INTERVAL: number = 2000; // ms
+const PEER_RECONNECT_INTERVAL: number = 5000; // ms
 
 interface InTableContextProps {
   players: MysteryChineseChess.PlayerStruct[];
@@ -222,7 +222,7 @@ export const InTableContextProvider: React.FC<PropsWithChildren> = ({ children }
         console.log('clear interval');
       }
     };
-  }, [connectOpponentPeerAddress, currentTable?.players.length, isHost, opponentAddress, peerReconnectionCounter]);
+  }, [connectOpponentPeerAddress, currentTable?.players.length, isHost, opponentAddress, peerReconnectionCounter, inTableAndHasEnoughPlayers]);
 
   // Executed firstly to (re)connect to opponent in case 2 players lost connection to each other (due to any reason)
   // Note: ONLY host sends offer for peer connection establishment
